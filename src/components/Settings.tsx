@@ -2,11 +2,15 @@ import { useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { CODE_FONTS, UI_FONTS } from '../lib/settings';
-import { useProfile } from '../context/ProfileContext';
-import { exportBackup, importBackup } from '../lib/profiles';
+import { useSession } from '../context/SessionContext';
+import { exportBackup, importBackup } from '../lib/backup';
 import type { BaseColors, ThemeId } from '../lib/theme';
 
-/** Labels for the 8 editable custom-theme colors (Guide §IV). */
+interface SettingsProps {
+  /** Open the login screen (shown to guests). */
+  onShowLogin: () => void;
+}
+
 const COLOR_FIELDS: Array<{ key: keyof BaseColors; label: string }> = [
   { key: 'background', label: 'Background' },
   { key: 'textPrimary', label: 'Text' },
@@ -58,9 +62,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 }
 
 function SectionTitle({ children }: { children: ReactNode }) {
-  return (
-    <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-content-secondary">{children}</h2>
-  );
+  return <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-content-secondary">{children}</h2>;
 }
 
 const selectClass =
@@ -68,16 +70,10 @@ const selectClass =
 const btnClass =
   'rounded-md border border-border-tertiary px-4 py-2 text-sm text-content-secondary transition-colors hover:bg-background-secondary';
 
-/**
- * Customization + account surface. Theme/typography/behavior apply live via CSS
- * variables. Profile management and validated backup export/import live at the
- * bottom. A restore reloads the page so every context re-initializes cleanly.
- */
-export default function Settings() {
+export default function Settings({ onShowLogin }: SettingsProps) {
   const { settings, update, reset } = useSettings();
-  const { profiles, activeProfile, switchProfile, rename, remove } = useProfile();
+  const { isGuest, account, displayName, logout, removeAccount } = useSession();
 
-  const nameRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
@@ -97,12 +93,11 @@ export default function Settings() {
 
   const onImportFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file later
+    e.target.value = '';
     if (!file) return;
     setImportError(null);
     try {
-      const text = await file.text();
-      const result = importBackup(text);
+      const result = importBackup(await file.text());
       if (result.ok) window.location.reload();
       else setImportError(result.error);
     } catch {
@@ -113,6 +108,52 @@ export default function Settings() {
   return (
     <div className="mx-auto w-full max-w-2xl pb-12">
       <h1 className="mb-8 text-lg font-medium text-content-primary">Settings</h1>
+
+      {/* Account */}
+      <section className="mb-8">
+        <SectionTitle>Account</SectionTitle>
+        {isGuest ? (
+          <div className="rounded-lg border border-border-tertiary bg-background-secondary p-4">
+            <p className="text-sm text-content-primary">You&apos;re playing as a guest.</p>
+            <p className="mt-1 text-sm text-content-secondary">
+              Guest progress is saved only for this browser session. Log in or create an account to
+              save it on this device permanently.
+            </p>
+            <button
+              type="button"
+              onClick={onShowLogin}
+              className="mt-4 rounded-md border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-background-tertiary"
+            >
+              Log in or create account
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-border-tertiary bg-background-secondary p-4">
+            <p className="text-sm text-content-primary">
+              Signed in as <span className="font-medium">{displayName}</span>
+            </p>
+            <p className="mt-1 text-xs text-content-tertiary">
+              Stored locally on this device. No cloud sync — use Export backup to move between devices.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" onClick={logout} className={btnClass}>
+                Log out
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (account && window.confirm('Delete this account and all of its saved progress on this device?')) {
+                    removeAccount(account.id);
+                  }
+                }}
+                className="rounded-md border border-error px-4 py-2 text-sm text-error transition-colors hover:bg-background-tertiary"
+              >
+                Delete account
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Theme */}
       <section className="mb-8">
@@ -238,69 +279,12 @@ export default function Settings() {
         </button>
       </section>
 
-      {/* Profiles */}
-      <section className="mb-8">
-        <SectionTitle>Profiles</SectionTitle>
-        <p className="mb-4 text-xs text-content-tertiary">
-          Profiles are stored only on this device — there's no account or server.
-        </p>
-
-        <div className="flex items-end gap-2">
-          <label className="flex flex-1 flex-col gap-1 text-xs text-content-secondary">
-            Active profile name
-            <input
-              key={activeProfile.id}
-              ref={nameRef}
-              defaultValue={activeProfile.name}
-              maxLength={24}
-              className="rounded-md border border-border-tertiary bg-background-secondary px-3 py-1.5 text-sm text-content-primary outline-none"
-              aria-label="Active profile name"
-            />
-          </label>
-          <button
-            type="button"
-            onClick={() => nameRef.current && rename(activeProfile.id, nameRef.current.value)}
-            className={btnClass}
-          >
-            Save name
-          </button>
-        </div>
-
-        <ul className="mt-4 divide-y divide-border-tertiary border-y border-border-tertiary">
-          {profiles.map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
-              <button
-                type="button"
-                onClick={() => switchProfile(p.id)}
-                className="flex items-center gap-2 text-sm text-content-primary"
-              >
-                <span
-                  className="inline-block h-3 w-3 rounded-full"
-                  style={{ background: p.avatarColor }}
-                  aria-hidden="true"
-                />
-                {p.name}
-                {p.id === activeProfile.id && <span className="text-xs text-accent">active</span>}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm(`Delete profile "${p.name}" and its progress?`)) remove(p.id);
-                }}
-                className="rounded-md border border-border-tertiary px-3 py-1 text-xs text-error hover:bg-background-secondary"
-              >
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-
       {/* Data */}
       <section>
         <SectionTitle>Data</SectionTitle>
         <p className="mb-4 text-xs text-content-tertiary">
-          Back up all profiles, progress, and settings to a JSON file, or restore from one.
+          Back up all accounts, progress, and settings to a JSON file, or restore from one. This is
+          how you move data between devices (there is no server).
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={downloadBackup} className={btnClass}>

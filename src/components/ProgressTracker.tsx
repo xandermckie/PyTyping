@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { Exercise } from '../types/exercise';
-import { getProgress } from '../lib/progress';
-import { useProfile } from '../context/ProfileContext';
+import { getHistory, getProgress } from '../lib/progress';
+import { useSession } from '../context/SessionContext';
 
 interface ProgressTrackerProps {
   exercises: Exercise[];
@@ -16,6 +16,46 @@ function Stat({ value, label }: { value: string; label: string }) {
   );
 }
 
+/** Minimal inline trend line of values (e.g. WPM across attempts). */
+function Sparkline({ values, width = 96, height = 28 }: { values: number[]; width?: number; height?: number }) {
+  if (values.length < 2) {
+    return <div className="h-7 text-xs text-content-tertiary">—</div>;
+  }
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const stepX = width / (values.length - 1);
+  // Invert y so larger values sit higher; pad 2px top/bottom.
+  const points = values
+    .map((v, i) => `${(i * stepX).toFixed(1)},${(height - 2 - ((v - min) / span) * (height - 4)).toFixed(1)}`)
+    .join(' ');
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" className="overflow-visible">
+      <polyline
+        points={points}
+        fill="none"
+        stroke="var(--color-accent)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function Trend({ delta, unit, higherIsBetter = true }: { delta: number; unit: string; higherIsBetter?: boolean }) {
+  const v = Math.round(delta * 10) / 10;
+  if (v === 0) return <span className="text-content-tertiary">±0{unit}</span>;
+  const improved = higherIsBetter ? v > 0 : v < 0;
+  return (
+    <span className={improved ? 'text-success' : 'text-error'}>
+      {v > 0 ? '+' : ''}
+      {v}
+      {unit}
+    </span>
+  );
+}
+
 /**
  * Read-only stats view. Aggregates the saved best-attempt records against the
  * full exercise catalogue: completion count, average accuracy/WPM, and a
@@ -23,9 +63,9 @@ function Stat({ value, label }: { value: string; label: string }) {
  * tagged with it is completed).
  */
 export default function ProgressTracker({ exercises }: ProgressTrackerProps) {
-  const { activeId, activeProfile, progressVersion } = useProfile();
+  const { scopeId, displayName, isGuest, progressVersion } = useSession();
   const stats = useMemo(() => {
-    const progress = getProgress(activeId);
+    const progress = getProgress(scopeId);
     const records = Object.values(progress);
     const completedIds = new Set(records.map((r) => r.exerciseId));
 
@@ -57,12 +97,33 @@ export default function ProgressTracker({ exercises }: ProgressTrackerProps) {
       topics,
       hasData: records.length > 0,
     };
-  }, [exercises, activeId, progressVersion]);
+  }, [exercises, scopeId, progressVersion]);
+
+  // Per-exercise improvement: exercises with 1+ recorded attempts, newest first.
+  const improvement = useMemo(() => {
+    const history = getHistory(scopeId);
+    const titles = new Map(exercises.map((e) => [e.id, e.title]));
+    return Object.entries(history)
+      .map(([id, attempts]) => ({
+        id,
+        title: titles.get(id) ?? id,
+        attempts,
+        wpms: attempts.map((a) => a.wpm),
+        wpmDelta: attempts[attempts.length - 1].wpm - attempts[0].wpm,
+        accDelta: attempts[attempts.length - 1].accuracy - attempts[0].accuracy,
+        lastAt: attempts[attempts.length - 1].at,
+      }))
+      .sort((a, b) => b.lastAt.localeCompare(a.lastAt))
+      .slice(0, 12);
+  }, [exercises, scopeId, progressVersion]);
 
   return (
     <div className="mx-auto w-full max-w-2xl pb-12">
       <h1 className="mb-1 text-lg font-medium text-content-primary">Your progress</h1>
-      <p className="mb-8 text-sm text-content-tertiary">Profile: {activeProfile.name}</p>
+      <p className="mb-8 text-sm text-content-tertiary">
+        {displayName}
+        {isGuest && ' · guest progress is saved only for this browser session'}
+      </p>
 
       {!stats.hasData ? (
         <p className="text-sm text-content-secondary">
@@ -104,6 +165,38 @@ export default function ProgressTracker({ exercises }: ProgressTrackerProps) {
               })}
             </div>
           </section>
+
+          {improvement.length > 0 && (
+            <section className="mt-10">
+              <h2 className="mb-1 text-sm font-medium uppercase tracking-wide text-content-secondary">
+                Improvement
+              </h2>
+              <p className="mb-4 text-xs text-content-tertiary">
+                WPM trend and change since your first attempt, per exercise.
+              </p>
+              <div className="divide-y divide-border-tertiary border-y border-border-tertiary">
+                {improvement.map((row) => (
+                  <div key={row.id} className="flex items-center gap-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm text-content-primary">{row.title}</div>
+                      <div className="text-xs text-content-tertiary">
+                        {row.attempts.length} {row.attempts.length === 1 ? 'attempt' : 'attempts'}
+                      </div>
+                    </div>
+                    <Sparkline values={row.wpms} />
+                    <div className="w-28 text-right text-xs">
+                      <div className="text-content-secondary">
+                        wpm <Trend delta={row.wpmDelta} unit="" />
+                      </div>
+                      <div className="text-content-secondary">
+                        acc <Trend delta={row.accDelta} unit="%" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>

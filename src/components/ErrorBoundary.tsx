@@ -1,6 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
-import { clearAllData } from '../lib/profiles';
+import { clearAllData } from '../lib/backup';
 
 interface Props {
   children: ReactNode;

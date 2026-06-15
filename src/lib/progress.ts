@@ -22,8 +22,43 @@ export interface CompletionRecord {
 
 export type ProgressMap = Record<string, CompletionRecord>;
 
+/** One row in an exercise's attempt history (drives round-to-round trends). */
+export interface AttemptSummary {
+  wpm: number;
+  accuracy: number;
+  errors: number;
+  quizCorrect: number;
+  quizTotal: number;
+  /** ISO timestamp. */
+  at: string;
+}
+
+/** exerciseId -> chronological attempts (oldest first). */
+export type HistoryMap = Record<string, AttemptSummary[]>;
+
+/** Keep only the most recent N attempts per exercise to bound storage. */
+const HISTORY_CAP = 25;
+
 export function progressKey(profileId: string): string {
   return `progress:${profileId}`;
+}
+
+export function historyKey(profileId: string): string {
+  return `history:${profileId}`;
+}
+
+/**
+ * Guest progress is intentionally ephemeral — it lives in sessionStorage and is
+ * gone when the browser session ends. Account progress lives in localStorage so
+ * it persists on the device. This is the concrete difference between "just
+ * cached" (guest) and "saved" (logged in).
+ */
+function pickStore(profileId: string): Storage | undefined {
+  try {
+    return profileId === 'guest' ? window.sessionStorage : window.localStorage;
+  } catch {
+    return undefined;
+  }
 }
 
 function validateRecord(raw: unknown): CompletionRecord | null {
@@ -54,15 +89,69 @@ export function validateProgressMap(raw: unknown): ProgressMap {
 }
 
 export function getProgress(profileId: string): ProgressMap {
-  return loadValidated(progressKey(profileId), validateProgressMap);
+  return loadValidated(progressKey(profileId), validateProgressMap, pickStore(profileId));
 }
 
 export function setProgress(profileId: string, map: ProgressMap): void {
-  saveJSON(progressKey(profileId), map);
+  saveJSON(progressKey(profileId), map, pickStore(profileId));
 }
 
 export function clearProgress(profileId: string): void {
-  removeKey(progressKey(profileId));
+  const store = pickStore(profileId);
+  removeKey(progressKey(profileId), store);
+  removeKey(historyKey(profileId), store);
+}
+
+/** Copy one scope's progress + history onto another (guest → account on signup). */
+export function copyScope(fromId: string, toId: string): void {
+  setProgress(toId, getProgress(fromId));
+  setHistory(toId, getHistory(fromId));
+}
+
+/* ----------------------------- attempt history ---------------------------- */
+
+function validateAttempt(raw: unknown): AttemptSummary | null {
+  if (!isObject(raw)) return null;
+  const { wpm, accuracy, errors, quizCorrect, quizTotal, at } = raw;
+  if (![wpm, accuracy, errors, quizCorrect, quizTotal].every(isNumber)) return null;
+  return {
+    wpm: wpm as number,
+    accuracy: accuracy as number,
+    errors: errors as number,
+    quizCorrect: quizCorrect as number,
+    quizTotal: quizTotal as number,
+    at: isString(at) ? at : new Date().toISOString(),
+  };
+}
+
+export function validateHistoryMap(raw: unknown): HistoryMap {
+  if (!isObject(raw)) return {};
+  const out: HistoryMap = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!Array.isArray(value)) continue;
+    const attempts = value.map(validateAttempt).filter((a): a is AttemptSummary => a !== null);
+    if (attempts.length) out[key] = attempts.slice(-HISTORY_CAP);
+  }
+  return out;
+}
+
+export function getHistory(profileId: string): HistoryMap {
+  return loadValidated(historyKey(profileId), validateHistoryMap, pickStore(profileId));
+}
+
+export function setHistory(profileId: string, map: HistoryMap): void {
+  saveJSON(historyKey(profileId), map, pickStore(profileId));
+}
+
+export function getAttempts(profileId: string, exerciseId: string): AttemptSummary[] {
+  return getHistory(profileId)[exerciseId] ?? [];
+}
+
+function appendAttempt(profileId: string, exerciseId: string, attempt: AttemptSummary): void {
+  const history = getHistory(profileId);
+  const list = history[exerciseId] ?? [];
+  history[exerciseId] = [...list, attempt].slice(-HISTORY_CAP);
+  setHistory(profileId, history);
 }
 
 /** A run is "better" if its (accuracy + quiz%) sum is higher. */
@@ -88,6 +177,18 @@ export function recordCompletion(
 
   all[entry.exerciseId] = best;
   setProgress(profileId, all);
+
+  // Always log this attempt to history so the user can track round-to-round
+  // improvement, even when it wasn't their best run.
+  appendAttempt(profileId, entry.exerciseId, {
+    wpm: entry.wpm,
+    accuracy: entry.accuracy,
+    errors: entry.errors,
+    quizCorrect: entry.quizCorrect,
+    quizTotal: entry.quizTotal,
+    at: candidate.completedAt,
+  });
+
   return best;
 }
 

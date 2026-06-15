@@ -36,7 +36,21 @@ function cspPlugin(): Plugin {
 }
 
 // exercises.json is imported as a module so it is embedded in the build
-// (offline-first, no runtime fetch).
+// (offline-first, no runtime fetch). It's split into its own chunk so the large
+// data set loads in parallel and caches independently of the app code.
 export default defineConfig({
   plugins: [react(), cspPlugin()],
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('exercises.json')) return 'exercises';
+          if (id.includes('node_modules/prismjs')) return 'prism';
+          if (id.includes('node_modules/react')) return 'react-vendor';
+          return undefined;
+        },
+      },
+    },
+  },
 });

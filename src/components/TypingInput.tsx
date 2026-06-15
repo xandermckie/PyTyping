@@ -433,7 +433,7 @@ export default function TypingInput({
             trap focus; the user re-focuses by click or Ctrl/⌘+L). */}
         {!focused && !done && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <span className="rounded-md bg-background-primary px-3 py-1.5 text-sm text-content-secondary shadow-sm">
+            <span className="rounded-md border border-border-tertiary bg-background-primary px-3 py-1.5 text-sm text-content-secondary">
               Click here or press Ctrl/⌘+L to start typing
             </span>
           </div>

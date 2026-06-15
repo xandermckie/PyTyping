@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import ExerciseCard from '../components/ExerciseCard';
+import Logo from '../components/Logo';
 import { EXERCISES, DIFFICULTIES, allTopics } from '../lib/exercises';
 import { getProgress } from '../lib/progress';
-import { useProfile } from '../context/ProfileContext';
+import { useSession } from '../context/SessionContext';
 import type { Difficulty } from '../types/exercise';
 
 interface HomeProps {
@@ -19,13 +20,13 @@ type DifficultyFilter = Difficulty | 'all';
 export default function Home({ onSelectExercise }: HomeProps) {
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all');
   const [topic, setTopic] = useState<string>('all');
-  const { activeId, progressVersion } = useProfile();
+  const { scopeId, progressVersion } = useSession();
 
   const topics = useMemo(() => allTopics(), []);
-  // Re-read when the active profile changes or progress is recorded.
+  // Re-read when the active session changes or progress is recorded.
   const completedIds = useMemo(
-    () => new Set(Object.keys(getProgress(activeId))),
-    [activeId, progressVersion],
+    () => new Set(Object.keys(getProgress(scopeId))),
+    [scopeId, progressVersion],
   );
 
   const filtered = useMemo(
@@ -48,12 +49,20 @@ export default function Home({ onSelectExercise }: HomeProps) {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <header className="py-10 sm:py-16">
+        <Logo size={40} wordmark={false} className="mb-5 text-content-primary" />
         <h1 className="text-2xl font-medium text-content-primary sm:text-3xl">
           Learn Python by typing it.
         </h1>
         <p className="mt-3 max-w-xl text-content-secondary">
           Type real Python snippets character by character with instant feedback, then check your
           understanding with a short quiz and a plain-language breakdown.
+        </p>
+        <p className="mt-4 text-sm text-content-tertiary">
+          {EXERCISES.length} exercises · {topics.length} topics · type{' '}
+          <kbd className="rounded border border-border-tertiary bg-background-secondary px-1.5 py-0.5 font-mono text-xs">
+            ctrl/⌘ + k
+          </kbd>{' '}
+          for the command line
         </p>
       </header>
 

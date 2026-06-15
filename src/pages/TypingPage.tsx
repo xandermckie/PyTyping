@@ -4,8 +4,9 @@ import QuizPanel from '../components/QuizPanel';
 import BreakdownPanel from '../components/BreakdownPanel';
 import ResultsPanel from '../components/ResultsPanel';
 import { getExerciseById } from '../lib/exercises';
-import { recordCompletion } from '../lib/progress';
-import { useProfile } from '../context/ProfileContext';
+import { getAttempts, recordCompletion } from '../lib/progress';
+import type { AttemptSummary } from '../lib/progress';
+import { useSession } from '../context/SessionContext';
 import type { QuizScore, TypingStats } from '../types/exercise';
 
 interface TypingPageProps {
@@ -25,9 +26,12 @@ type Phase = 'typing' | 'results' | 'quiz' | 'breakdown';
  */
 export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFocusChange }: TypingPageProps) {
   const exercise = getExerciseById(exerciseId);
-  const { activeId, notifyProgressChange } = useProfile();
+  const { scopeId, notifyProgressChange } = useSession();
   const [phase, setPhase] = useState<Phase>('typing');
   const [typingStats, setTypingStats] = useState<TypingStats | null>(null);
+  // The most recent prior attempt, captured when typing finishes so the
+  // results screen can show round-to-round improvement.
+  const [previous, setPrevious] = useState<AttemptSummary | null>(null);
   // Bumped to force a fresh TypingInput when the user restarts the snippet.
   const [restartKey, setRestartKey] = useState(0);
 
@@ -43,10 +47,18 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
     if (phase !== 'typing') onFocusChange?.(false);
   }, [phase, onFocusChange]);
 
-  const handleTypingComplete = useCallback((stats: TypingStats) => {
-    setTypingStats(stats);
-    setPhase('results');
-  }, []);
+  const handleTypingComplete = useCallback(
+    (stats: TypingStats) => {
+      if (!exercise) return;
+      // Snapshot the prior attempt BEFORE the new one is recorded (after the
+      // quiz), so the results screen compares against the right baseline.
+      const attempts = getAttempts(scopeId, exercise.id);
+      setPrevious(attempts.length ? attempts[attempts.length - 1] : null);
+      setTypingStats(stats);
+      setPhase('results');
+    },
+    [scopeId, exercise],
+  );
 
   const handleRestart = useCallback(() => {
     setTypingStats(null);
@@ -57,7 +69,7 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
   const handleQuizComplete = useCallback(
     (score: QuizScore) => {
       if (exercise && typingStats) {
-        recordCompletion(activeId, {
+        recordCompletion(scopeId, {
           exerciseId: exercise.id,
           accuracy: typingStats.accuracy,
           wpm: typingStats.wpm,
@@ -69,7 +81,7 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
       }
       setPhase('breakdown');
     },
-    [activeId, exercise, notifyProgressChange, typingStats],
+    [scopeId, exercise, notifyProgressChange, typingStats],
   );
 
   if (!exercise) {
@@ -117,7 +129,12 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
       )}
 
       {phase === 'results' && typingStats && (
-        <ResultsPanel stats={typingStats} onRestart={handleRestart} onContinue={() => setPhase('quiz')} />
+        <ResultsPanel
+          stats={typingStats}
+          previous={previous}
+          onRestart={handleRestart}
+          onContinue={() => setPhase('quiz')}
+        />
       )}
 
       {phase === 'quiz' && (

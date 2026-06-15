@@ -1,14 +1,25 @@
 /**
- * Tiny typed wrapper around localStorage. All persistence (settings + progress)
- * goes through here so reads/writes are safe in private-mode / SSR / quota-full
- * situations (they fail soft instead of throwing).
+ * Tiny typed wrapper around Web Storage. All persistence goes through here so
+ * reads/writes fail soft (private mode / quota / SSR). A `store` can be passed
+ * to target sessionStorage (ephemeral, used for guest progress) instead of the
+ * default localStorage (durable, used for accounts + settings).
  */
 
 const PREFIX = 'pytyping:';
 
-export function loadJSON<T>(key: string, fallback: T): T {
+function resolve(store?: Storage): Storage | null {
   try {
-    const raw = localStorage.getItem(PREFIX + key);
+    return store ?? window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+export function loadJSON<T>(key: string, fallback: T, store?: Storage): T {
+  const s = resolve(store);
+  if (!s) return fallback;
+  try {
+    const raw = s.getItem(PREFIX + key);
     if (raw == null) return fallback;
     return JSON.parse(raw) as T;
   } catch {
@@ -18,12 +29,12 @@ export function loadJSON<T>(key: string, fallback: T): T {
 
 /**
  * Like loadJSON, but runs the parsed value through a validator. Anything the
- * validator rejects (corrupted or tampered storage) collapses to the fallback,
- * so untrusted persisted data can never reach the rest of the app unchecked.
+ * validator rejects (corrupted or tampered storage) collapses to the fallback.
  */
-export function loadValidated<T>(key: string, validate: (raw: unknown) => T): T {
+export function loadValidated<T>(key: string, validate: (raw: unknown) => T, store?: Storage): T {
+  const s = resolve(store);
   try {
-    const raw = localStorage.getItem(PREFIX + key);
+    const raw = s ? s.getItem(PREFIX + key) : null;
     if (raw == null) return validate(undefined);
     return validate(JSON.parse(raw));
   } catch {
@@ -31,17 +42,21 @@ export function loadValidated<T>(key: string, validate: (raw: unknown) => T): T 
   }
 }
 
-export function saveJSON<T>(key: string, value: T): void {
+export function saveJSON<T>(key: string, value: T, store?: Storage): void {
+  const s = resolve(store);
+  if (!s) return;
   try {
-    localStorage.setItem(PREFIX + key, JSON.stringify(value));
+    s.setItem(PREFIX + key, JSON.stringify(value));
   } catch {
     /* storage unavailable or full — ignore, the app still works in-memory */
   }
 }
 
-export function removeKey(key: string): void {
+export function removeKey(key: string, store?: Storage): void {
+  const s = resolve(store);
+  if (!s) return;
   try {
-    localStorage.removeItem(PREFIX + key);
+    s.removeItem(PREFIX + key);
   } catch {
     /* no-op */
   }

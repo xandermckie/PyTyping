@@ -223,8 +223,11 @@ export default function ComponentName({ code, onComplete }: Props) {
 - [x] TypingPage.tsx (orchestrates Typing → Quiz → Breakdown)
 - [x] data/exercises.json (6 curated exercises, beginner → advanced)
 - [x] Hardening: ErrorBoundary, runtime data/storage validation, color/import sanitization, production CSP
-- [x] Local user profiles (per-profile progress, switcher, rename/delete, validated backup export/import)
 - [x] Monkeytype UX: results screen, command palette (Ctrl/⌘+K), zen chrome-fade, tips footer, Esc menu + restart
+- [x] 500-exercise bank (6 curated + 494 generated via scripts/generate-exercises.mjs; `npm run gen:exercises`)
+- [x] Premade fonts (8 code / 4 UI), SVG logo + favicon, round-to-round improvement (results deltas + progress sparklines)
+- [x] Auth: guest by default (sessionStorage), optional local accounts (localStorage, PBKDF2-hashed), login screen, account menu
+- [x] Legal: LICENSE (MIT) + About/Legal view; footer credits (Xander McKie → GitHub) and Monkeytype attribution
 - [ ] Project deployed to Vercel
 
 *(Update this as you build)*

@@ -23,14 +23,23 @@ export interface Settings {
   caretBlink: boolean;
 }
 
+// Premade code fonts. The first family in each stack is loaded from Google
+// Fonts (see index.html); the rest are offline fallbacks.
 export const CODE_FONTS: Array<{ label: string; value: string }> = [
   { label: 'JetBrains Mono', value: "'JetBrains Mono', 'Courier New', ui-monospace, monospace" },
+  { label: 'Fira Code', value: "'Fira Code', 'JetBrains Mono', ui-monospace, monospace" },
+  { label: 'Source Code Pro', value: "'Source Code Pro', ui-monospace, monospace" },
+  { label: 'IBM Plex Mono', value: "'IBM Plex Mono', ui-monospace, monospace" },
+  { label: 'Roboto Mono', value: "'Roboto Mono', ui-monospace, monospace" },
+  { label: 'Space Mono', value: "'Space Mono', ui-monospace, monospace" },
   { label: 'Courier New', value: "'Courier New', ui-monospace, monospace" },
   { label: 'System Mono', value: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' },
 ];
 
 export const UI_FONTS: Array<{ label: string; value: string }> = [
   { label: 'Inter', value: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif" },
+  { label: 'Lexend', value: "'Lexend', system-ui, -apple-system, sans-serif" },
+  { label: 'Roboto', value: "'Roboto', system-ui, -apple-system, sans-serif" },
   { label: 'System Sans', value: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" },
 ];
 

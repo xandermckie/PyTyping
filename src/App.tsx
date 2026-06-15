@@ -1,33 +1,36 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
-import { ProfileProvider, useProfile } from './context/ProfileContext';
+import { SessionProvider, useSession } from './context/SessionContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import TypingPage from './pages/TypingPage';
 import Settings from './components/Settings';
 import ProgressTracker from './components/ProgressTracker';
-import ProfileMenu from './components/ProfileMenu';
+import AccountMenu from './components/AccountMenu';
+import LoginScreen from './components/LoginScreen';
+import AboutLegal from './components/AboutLegal';
 import Footer from './components/Footer';
+import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import type { Command } from './components/CommandPalette';
 import { EXERCISES } from './lib/exercises';
 
-type View = 'home' | 'typing' | 'settings' | 'progress';
+type View = 'home' | 'typing' | 'settings' | 'progress' | 'login' | 'about';
 
-const NAV: Array<{ id: Exclude<View, 'typing'>; label: string }> = [
+const NAV: Array<{ id: Exclude<View, 'typing' | 'login' | 'about'>; label: string }> = [
   { id: 'home', label: 'Exercises' },
   { id: 'progress', label: 'Progress' },
   { id: 'settings', label: 'Settings' },
 ];
 
 /**
- * Top-level shell. Routing is a small view state machine (no router library,
- * per the "no external libraries" constraint). Adds Monkeytype-isms: a command
- * line (Ctrl/⌘+K), a tips footer, and a zen fade that hides chrome while typing.
+ * Top-level shell. Routing is a small view state machine (no router library).
+ * Guest-usable by default; the login view is optional. Adds Monkeytype-isms:
+ * a command line (Ctrl/⌘+K), a tips/credits footer, and a zen fade while typing.
  */
 function AppShell() {
   const { settings, update } = useSettings();
-  const { profiles, activeProfile, switchProfile } = useProfile();
+  const { isGuest, logout } = useSession();
   const [view, setView] = useState<View>('home');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [chromeHidden, setChromeHidden] = useState(false);
@@ -39,12 +42,10 @@ function AppShell() {
   }, []);
   const goHome = useCallback(() => setView('home'), []);
 
-  // Chrome only fades inside the typing view; reset it everywhere else.
   useEffect(() => {
     if (view !== 'typing') setChromeHidden(false);
   }, [view]);
 
-  // Global command-line shortcut.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -61,6 +62,7 @@ function AppShell() {
       { id: 'nav-home', label: 'Go to Exercises', hint: 'navigate', run: () => setView('home') },
       { id: 'nav-progress', label: 'Go to Progress', hint: 'navigate', run: () => setView('progress') },
       { id: 'nav-settings', label: 'Go to Settings', hint: 'navigate', run: () => setView('settings') },
+      { id: 'nav-about', label: 'About & legal', hint: 'navigate', run: () => setView('about') },
       { id: 'theme-light', label: 'Theme: Light', hint: 'theme', run: () => update({ themeId: 'light' }) },
       { id: 'theme-monokia', label: 'Theme: Monokia', hint: 'theme', run: () => update({ themeId: 'monokia' }) },
       { id: 'theme-custom', label: 'Theme: Custom', hint: 'theme', run: () => update({ themeId: 'custom' }) },
@@ -71,25 +73,24 @@ function AppShell() {
         run: () => update({ lineNumbers: !settings.lineNumbers }),
       },
       {
-        id: 'toggle-sound',
-        label: `${settings.soundEnabled ? 'Disable' : 'Enable'} error sound`,
-        hint: 'setting',
-        run: () => update({ soundEnabled: !settings.soundEnabled }),
-      },
-      {
         id: 'toggle-wpm',
         label: `${settings.liveWpm ? 'Hide' : 'Show'} live WPM`,
         hint: 'setting',
         run: () => update({ liveWpm: !settings.liveWpm }),
       },
     ];
-    for (const p of profiles) {
-      if (p.id !== activeProfile.id) {
-        cmds.push({ id: `prof-${p.id}`, label: `Switch to ${p.name}`, hint: 'profile', run: () => switchProfile(p.id) });
-      }
+    if (isGuest) {
+      cmds.push({ id: 'login', label: 'Log in / Sign up', hint: 'account', run: () => setView('login') });
+    } else {
+      cmds.push({ id: 'logout', label: 'Log out', hint: 'account', run: logout });
     }
     return cmds;
-  }, [profiles, activeProfile.id, settings.lineNumbers, settings.soundEnabled, settings.liveWpm, update, switchProfile]);
+  }, [isGuest, logout, settings.lineNumbers, settings.liveWpm, update]);
+
+  // The login screen is a focused, full-page view without the app chrome.
+  if (view === 'login') {
+    return <LoginScreen onDone={goHome} onGuest={goHome} />;
+  }
 
   return (
     <div className="flex min-h-full flex-col">
@@ -99,13 +100,8 @@ function AppShell() {
         }`}
       >
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-          <button
-            type="button"
-            onClick={goHome}
-            className="font-mono text-base font-medium text-content-primary"
-            aria-label="PyTyping home"
-          >
-            py<span className="text-accent">typing</span>
+          <button type="button" onClick={goHome} className="rounded-md focus-visible:outline-none" aria-label="PyTyping home">
+            <Logo size={26} />
           </button>
           <div className="flex items-center gap-1">
             <nav className="flex gap-1" aria-label="Primary">
@@ -127,7 +123,7 @@ function AppShell() {
               })}
             </nav>
             <div className="ml-1 border-l border-border-tertiary pl-1">
-              <ProfileMenu onManage={() => setView('settings')} />
+              <AccountMenu onShowLogin={() => setView('login')} onManage={() => setView('settings')} />
             </div>
           </div>
         </div>
@@ -144,11 +140,12 @@ function AppShell() {
             onFocusChange={setChromeHidden}
           />
         )}
-        {view === 'settings' && <Settings />}
+        {view === 'settings' && <Settings onShowLogin={() => setView('login')} />}
         {view === 'progress' && <ProgressTracker exercises={EXERCISES} />}
+        {view === 'about' && <AboutLegal />}
       </main>
 
-      <Footer hidden={chromeHidden} />
+      <Footer hidden={chromeHidden} onShowLegal={() => setView('about')} />
 
       <CommandPalette open={paletteOpen} commands={commands} onClose={() => setPaletteOpen(false)} />
     </div>
@@ -159,9 +156,9 @@ export default function App() {
   return (
     <ErrorBoundary>
       <SettingsProvider>
-        <ProfileProvider>
+        <SessionProvider>
           <AppShell />
-        </ProfileProvider>
+        </SessionProvider>
       </SettingsProvider>
     </ErrorBoundary>
   );
