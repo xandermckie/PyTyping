@@ -39,6 +39,10 @@ function cspPlugin(): Plugin {
 // (offline-first, no runtime fetch). It's split into its own chunk so the large
 // data set loads in parallel and caches independently of the app code.
 export default defineConfig({
+  // GitHub Pages serves this repo from the /PyTyping/ subpath, so asset URLs
+  // must be prefixed accordingly. For a user/org root site or a custom domain
+  // served at '/', change this back to '/'.
+  base: '/PyTyping/',
   plugins: [react(), cspPlugin()],
   build: {
     chunkSizeWarningLimit: 900,
