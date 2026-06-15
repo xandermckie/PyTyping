@@ -212,14 +212,19 @@ export default function ComponentName({ code, onComplete }: Props) {
 
 ## What's Been Built So Far
 
-- [ ] TypingInput.tsx
-- [ ] QuizPanel.tsx
-- [ ] BreakdownPanel.tsx
-- [ ] ExerciseCard.tsx
-- [ ] Settings.tsx
-- [ ] ProgressTracker.tsx
-- [ ] Home.tsx
-- [ ] TypingPage.tsx
+- [x] Project scaffold (Vite + React + TS + Tailwind v3, design-system CSS variables)
+- [x] TypingInput.tsx (Prism highlighting, strict keystroke validation, desktop + mobile input)
+- [x] QuizPanel.tsx
+- [x] BreakdownPanel.tsx
+- [x] ExerciseCard.tsx
+- [x] Settings.tsx (presets + 8-color custom editor, fonts, tab size, sound, line numbers)
+- [x] ProgressTracker.tsx
+- [x] Home.tsx (browser with difficulty/topic filters)
+- [x] TypingPage.tsx (orchestrates Typing → Quiz → Breakdown)
+- [x] data/exercises.json (6 curated exercises, beginner → advanced)
+- [x] Hardening: ErrorBoundary, runtime data/storage validation, color/import sanitization, production CSP
+- [x] Local user profiles (per-profile progress, switcher, rename/delete, validated backup export/import)
+- [x] Monkeytype UX: results screen, command palette (Ctrl/⌘+K), zen chrome-fade, tips footer, Esc menu + restart
 - [ ] Project deployed to Vercel
 
 *(Update this as you build)*

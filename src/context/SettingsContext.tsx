@@ -1,0 +1,69 @@
+/**
+ * App-wide settings (theme, fonts, tab size, sound, caret, etc). State lives
+ * here, is validated on load, persisted (debounced) to localStorage, and
+ * reflected onto the document root as CSS variables/attributes whenever it
+ * changes — so components only ever read design-system variables.
+ */
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { loadValidated, saveJSON } from '../lib/storage';
+import { applyPalette, resolvePalette } from '../lib/theme';
+import {
+  DEFAULT_SETTINGS,
+  SETTINGS_KEY,
+  validateSettings,
+} from '../lib/settings';
+import type { Settings } from '../lib/settings';
+
+interface SettingsContextValue {
+  settings: Settings;
+  update: (patch: Partial<Settings>) => void;
+  reset: () => void;
+}
+
+const SettingsContext = createContext<SettingsContextValue | null>(null);
+
+export function SettingsProvider({ children }: { children: ReactNode }) {
+  const [settings, setSettings] = useState<Settings>(() =>
+    loadValidated(SETTINGS_KEY, validateSettings),
+  );
+
+  // Apply palette + typography + caret behavior to <html> on every change.
+  useEffect(() => {
+    applyPalette(resolvePalette(settings.themeId, settings.customColors));
+    const root = document.documentElement;
+    root.style.setProperty('--font-code', settings.codeFont);
+    root.style.setProperty('--font-ui', settings.uiFont);
+    root.style.setProperty('--font-code-size', `${settings.codeFontSize}px`);
+    root.setAttribute('data-caret', settings.caretBlink ? 'blink' : 'steady');
+  }, [
+    settings.themeId,
+    settings.customColors,
+    settings.codeFont,
+    settings.uiFont,
+    settings.codeFontSize,
+    settings.caretBlink,
+  ]);
+
+  // Debounce persistence so dragging sliders/colors doesn't thrash storage.
+  const saveTimer = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => saveJSON(SETTINGS_KEY, settings), 150);
+    return () => window.clearTimeout(saveTimer.current);
+  }, [settings]);
+
+  const update = useCallback((patch: Partial<Settings>) => {
+    setSettings((prev) => ({ ...prev, ...patch }));
+  }, []);
+  const reset = useCallback(() => setSettings({ ...DEFAULT_SETTINGS }), []);
+
+  const value = useMemo(() => ({ settings, update, reset }), [settings, update, reset]);
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
+}
+
+export function useSettings(): SettingsContextValue {
+  const ctx = useContext(SettingsContext);
+  if (!ctx) throw new Error('useSettings must be used within <SettingsProvider>');
+  return ctx;
+}

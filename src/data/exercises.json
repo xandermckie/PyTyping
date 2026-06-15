@@ -1,0 +1,333 @@
+[
+  {
+    "id": "py-basics-swap-001",
+    "title": "Swap Two Variables",
+    "description": "Exchange the values of two variables in a single line using tuple unpacking.",
+    "difficulty": "beginner",
+    "topics": ["variables", "tuples", "assignment"],
+    "sourceUrl": "https://docs.python.org/3/tutorial/introduction.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 1,
+    "code": "a = 5\nb = 10\na, b = b, a\nprint(a, b)",
+    "explanation": {
+      "overview": "Python lets you assign multiple variables at once. The classic 'swap without a temp variable' works because the right-hand side is fully evaluated into a tuple before anything is assigned back to the names on the left.",
+      "keyTerms": [
+        { "term": "tuple packing", "definition": "Writing values separated by commas, like b, a, bundles them into a single tuple object." },
+        { "term": "tuple unpacking", "definition": "Assigning a tuple to a comma-separated list of names spreads its items across those names in order." },
+        { "term": "simultaneous assignment", "definition": "All targets on the left are bound at once, after the whole right side is computed." }
+      ],
+      "howItWorks": "1. a = 5 and b = 10 bind two integers.\n2. On the swap line, Python first evaluates the right side b, a, building the tuple (10, 5).\n3. It then unpacks that tuple into a, b, so a becomes 10 and b becomes 5.\n4. No temporary variable is needed because the original values are captured in the tuple first.",
+      "designPattern": "Tuple unpacking: a readable idiom for moving several values around at once, common in swaps, returning multiple values from a function, and looping over enumerate() or dict.items().",
+      "relatedExercises": ["py-comp-squares-001", "py-gen-fib-001"]
+    },
+    "quiz": [
+      {
+        "question": "After `a, b = b, a`, what is the value of `a`?",
+        "options": ["5", "10", "15", "None"],
+        "correctIndex": 1,
+        "explanation": "a takes b's original value, 10, because the right side (10, 5) is built before assignment."
+      },
+      {
+        "question": "What object does the right-hand side `b, a` create?",
+        "options": ["A list", "A tuple", "A set", "A dictionary"],
+        "correctIndex": 1,
+        "explanation": "Comma-separated values without brackets pack into a tuple."
+      },
+      {
+        "question": "Why is no temporary variable needed for the swap?",
+        "options": [
+          "Python evaluates the entire right-hand side before assigning the left",
+          "Variables are passed by reference",
+          "It uses low-level pointer arithmetic",
+          "The values are cached automatically"
+        ],
+        "correctIndex": 0,
+        "explanation": "The tuple on the right is fully built first, so both original values are safely captured before either name is rebound."
+      }
+    ]
+  },
+  {
+    "id": "py-loops-fizzbuzz-001",
+    "title": "FizzBuzz",
+    "description": "Print 1 to 15, replacing multiples of 3 with Fizz, 5 with Buzz, and both with FizzBuzz.",
+    "difficulty": "beginner",
+    "topics": ["loops", "conditionals", "modulo"],
+    "sourceUrl": "https://realpython.com/python-conditional-statements/",
+    "sourceLabel": "Real Python",
+    "estimatedTime": 2,
+    "code": "for n in range(1, 16):\n    if n % 15 == 0:\n        print(\"FizzBuzz\")\n    elif n % 3 == 0:\n        print(\"Fizz\")\n    elif n % 5 == 0:\n        print(\"Buzz\")\n    else:\n        print(n)",
+    "explanation": {
+      "overview": "FizzBuzz is the canonical interview warm-up. It exercises loops, the modulo operator, and ordered conditional logic. The trick is checking the most specific case (divisible by both 3 and 5) first.",
+      "keyTerms": [
+        { "term": "modulo (%)", "definition": "Returns the remainder of integer division; n % 3 == 0 means n is divisible by 3." },
+        { "term": "elif", "definition": "Short for 'else if'; only evaluated when all previous conditions were false." },
+        { "term": "range(start, stop)", "definition": "Produces integers from start up to but not including stop." }
+      ],
+      "howItWorks": "1. range(1, 16) yields the numbers 1 through 15.\n2. For each n, the first true branch wins, so n % 15 (both 3 and 5) is tested before the individual checks.\n3. If none match, the else branch prints the number itself.",
+      "designPattern": "Guard ordering: when conditions overlap, test the most specific one first so a broader rule can't shadow it.",
+      "relatedExercises": ["py-func-factorial-001", "py-comp-squares-001"]
+    },
+    "quiz": [
+      {
+        "question": "Why is `n % 15 == 0` checked before `% 3` and `% 5`?",
+        "options": [
+          "Numbers divisible by both 3 and 5 must print FizzBuzz, so that case must win first",
+          "15 is the largest number in the range",
+          "Modulo is faster with larger numbers",
+          "It avoids a division-by-zero error"
+        ],
+        "correctIndex": 0,
+        "explanation": "If % 3 were checked first, a number like 15 would print 'Fizz' and never reach the combined case."
+      },
+      {
+        "question": "How many numbers does `range(1, 16)` produce?",
+        "options": ["14", "15", "16", "17"],
+        "correctIndex": 1,
+        "explanation": "range is inclusive of the start (1) and exclusive of the stop (16), giving 1 through 15."
+      },
+      {
+        "question": "What does the `%` operator return?",
+        "options": [
+          "The quotient of division",
+          "The remainder of division",
+          "A percentage",
+          "The floor of division"
+        ],
+        "correctIndex": 1,
+        "explanation": "% yields the remainder; it is zero exactly when the left operand divides evenly."
+      },
+      {
+        "question": "What is printed when n = 9?",
+        "options": ["Fizz", "Buzz", "FizzBuzz", "9"],
+        "correctIndex": 0,
+        "explanation": "9 is divisible by 3 but not 5, so the % 3 branch prints 'Fizz'."
+      }
+    ]
+  },
+  {
+    "id": "py-func-factorial-001",
+    "title": "Recursive Factorial",
+    "description": "Compute n! with a function that calls itself, stopping at a base case.",
+    "difficulty": "beginner",
+    "topics": ["functions", "recursion"],
+    "sourceUrl": "https://realpython.com/python-recursion/",
+    "sourceLabel": "Real Python",
+    "estimatedTime": 2,
+    "code": "def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nprint(factorial(5))",
+    "explanation": {
+      "overview": "Factorial multiplies an integer by every positive integer below it. This recursive version expresses the math directly: n! = n * (n-1)!, with 0! and 1! defined as 1.",
+      "keyTerms": [
+        { "term": "recursion", "definition": "A function that solves a problem by calling itself on a smaller input." },
+        { "term": "base case", "definition": "The condition that stops the recursion; without it the function would call itself forever." },
+        { "term": "call stack", "definition": "The stack of in-progress function calls; very deep recursion can exhaust it and raise RecursionError." }
+      ],
+      "howItWorks": "1. factorial(5) needs 5 * factorial(4), which needs 4 * factorial(3), and so on.\n2. Each call defers its multiplication until the smaller call returns.\n3. factorial(1) hits the base case n <= 1 and returns 1.\n4. The stack unwinds, multiplying back up: 1, 2, 6, 24, 120.",
+      "designPattern": "Recursion: elegant for problems with a natural smaller-subproblem structure. For factorial a simple loop is equally valid and avoids stack depth limits.",
+      "relatedExercises": ["py-gen-fib-001", "py-loops-fizzbuzz-001"]
+    },
+    "quiz": [
+      {
+        "question": "What is the base case of this function?",
+        "options": ["n <= 1", "n == 0", "n > 1", "There isn't one"],
+        "correctIndex": 0,
+        "explanation": "When n <= 1 the function returns 1 directly instead of recursing, which stops the chain."
+      },
+      {
+        "question": "What does `factorial(5)` return?",
+        "options": ["24", "120", "25", "720"],
+        "correctIndex": 1,
+        "explanation": "5 * 4 * 3 * 2 * 1 = 120."
+      },
+      {
+        "question": "What happens if the base case is removed?",
+        "options": [
+          "The function returns 0",
+          "It recurses forever until a RecursionError",
+          "Python optimizes it into a loop",
+          "It returns None immediately"
+        ],
+        "correctIndex": 1,
+        "explanation": "With nothing to stop it, the calls keep growing the stack until Python raises RecursionError."
+      }
+    ]
+  },
+  {
+    "id": "py-comp-squares-001",
+    "title": "List Comprehension: Squares",
+    "description": "Build a new list of squared numbers from an existing list in one expression.",
+    "difficulty": "beginner",
+    "topics": ["list-comprehension", "loops", "operators"],
+    "sourceUrl": "https://realpython.com/list-comprehension-python/",
+    "sourceLabel": "Real Python",
+    "estimatedTime": 1,
+    "code": "numbers = [1, 2, 3, 4, 5]\nsquares = [n ** 2 for n in numbers]\nprint(squares)",
+    "explanation": {
+      "overview": "A list comprehension builds a list by applying an expression to each item of an iterable. It is the Pythonic alternative to creating an empty list and appending inside a for loop.",
+      "keyTerms": [
+        { "term": "list comprehension", "definition": "The [expression for item in iterable] syntax that constructs a list in one readable line." },
+        { "term": "** (power)", "definition": "The exponentiation operator; n ** 2 is n squared." },
+        { "term": "iterable", "definition": "Any object you can loop over, such as a list, tuple, or range." }
+      ],
+      "howItWorks": "1. numbers holds [1, 2, 3, 4, 5].\n2. The comprehension walks each n in numbers and evaluates n ** 2.\n3. The results are collected into a brand-new list, [1, 4, 9, 16, 25], leaving the original untouched.",
+      "designPattern": "Comprehension over manual loop: prefer a comprehension when you are transforming or filtering an iterable into a new list; it is shorter and signals intent.",
+      "relatedExercises": ["py-gen-fib-001", "py-basics-swap-001"]
+    },
+    "quiz": [
+      {
+        "question": "What does `squares` contain after this runs?",
+        "options": [
+          "[1, 2, 3, 4, 5]",
+          "[1, 4, 9, 16, 25]",
+          "[2, 4, 6, 8, 10]",
+          "[1, 8, 27, 64, 125]"
+        ],
+        "correctIndex": 1,
+        "explanation": "Each element is squared: 1, 4, 9, 16, 25."
+      },
+      {
+        "question": "What does the `**` operator do?",
+        "options": [
+          "Multiplies two numbers",
+          "Raises a number to a power",
+          "Performs integer division",
+          "Repeats a list"
+        ],
+        "correctIndex": 1,
+        "explanation": "** is exponentiation, so n ** 2 means n to the power of 2."
+      },
+      {
+        "question": "A list comprehension is primarily used to…",
+        "options": [
+          "Sort a list in place",
+          "Build a new list by transforming an iterable",
+          "Delete items from a list",
+          "Print each item of a list"
+        ],
+        "correctIndex": 1,
+        "explanation": "It produces a new list from an existing iterable, optionally filtering with an if clause."
+      }
+    ]
+  },
+  {
+    "id": "py-gen-fib-001",
+    "title": "Fibonacci Generator",
+    "description": "Yield Fibonacci numbers lazily until they reach a limit, without building a list.",
+    "difficulty": "intermediate",
+    "topics": ["generators", "yield", "loops"],
+    "sourceUrl": "https://realpython.com/introduction-to-python-generators/",
+    "sourceLabel": "Real Python",
+    "estimatedTime": 3,
+    "code": "def fibonacci(limit):\n    a, b = 0, 1\n    while a < limit:\n        yield a\n        a, b = b, a + b\n\nfor number in fibonacci(50):\n    print(number)",
+    "explanation": {
+      "overview": "A generator produces values one at a time, on demand, instead of returning them all at once. This Fibonacci generator never stores the whole sequence, so it works even for very large limits with constant memory.",
+      "keyTerms": [
+        { "term": "generator", "definition": "A function containing yield; calling it returns a lazy iterator rather than running the body immediately." },
+        { "term": "yield", "definition": "Hands a value back to the caller and pauses the function, resuming exactly where it left off on the next request." },
+        { "term": "lazy evaluation", "definition": "Computing each value only when it is actually needed, rather than all up front." }
+      ],
+      "howItWorks": "1. Calling fibonacci(50) returns a generator object; no code has run yet.\n2. Each loop iteration resumes the function until the next yield, which produces the current a.\n3. After yielding, a, b = b, a + b advances the pair to the next Fibonacci numbers.\n4. When a reaches or exceeds 50 the while condition fails, the function returns, and the loop ends.",
+      "designPattern": "Generator (iterator) pattern: stream values lazily to save memory and support infinite or very large sequences; combine with for loops, sum(), or next().",
+      "relatedExercises": ["py-comp-squares-001", "py-func-factorial-001"]
+    },
+    "quiz": [
+      {
+        "question": "What does the presence of `yield` make this function?",
+        "options": ["A coroutine", "A generator", "A decorator", "A closure"],
+        "correctIndex": 1,
+        "explanation": "Any function containing yield becomes a generator function that returns a lazy iterator."
+      },
+      {
+        "question": "What is the first value produced by `fibonacci(50)`?",
+        "options": ["0", "1", "2", "None"],
+        "correctIndex": 0,
+        "explanation": "a starts at 0 and the first yield happens before any update, so 0 comes out first."
+      },
+      {
+        "question": "How are a generator's values computed?",
+        "options": [
+          "All at once when the function is called",
+          "Lazily, one at a time as they are requested",
+          "Randomly",
+          "Only after the loop finishes"
+        ],
+        "correctIndex": 1,
+        "explanation": "Execution pauses at each yield and resumes on the next request, so values are produced on demand."
+      },
+      {
+        "question": "When does the generator stop yielding?",
+        "options": [
+          "After exactly 50 numbers",
+          "Once a reaches or exceeds the limit (50)",
+          "When b becomes 0",
+          "It never stops"
+        ],
+        "correctIndex": 1,
+        "explanation": "The while a < limit condition fails once a is 50 or more, ending the generator."
+      }
+    ]
+  },
+  {
+    "id": "py-deco-timer-001",
+    "title": "A Timing Decorator",
+    "description": "Write a decorator that measures and prints how long any function takes to run.",
+    "difficulty": "advanced",
+    "topics": ["decorators", "closures", "functions"],
+    "sourceUrl": "https://realpython.com/primer-on-python-decorators/",
+    "sourceLabel": "Real Python",
+    "estimatedTime": 4,
+    "code": "import time\nfrom functools import wraps\n\ndef timer(func):\n    @wraps(func)\n    def wrapper(*args, **kwargs):\n        start = time.perf_counter()\n        result = func(*args, **kwargs)\n        elapsed = time.perf_counter() - start\n        print(f\"{func.__name__} took {elapsed:.4f}s\")\n        return result\n    return wrapper\n\n@timer\ndef slow_square(n):\n    time.sleep(0.1)\n    return n * n",
+    "explanation": {
+      "overview": "A decorator is a function that takes another function and returns a replacement with added behavior. This timer wraps any function so that every call also reports its runtime, without touching the original function's body.",
+      "keyTerms": [
+        { "term": "decorator", "definition": "A callable that takes a function and returns a new function; @timer is sugar for slow_square = timer(slow_square)." },
+        { "term": "closure", "definition": "wrapper remembers the func it was given even after timer has returned, because it closes over that variable." },
+        { "term": "*args / **kwargs", "definition": "Capture any positional and keyword arguments so the wrapper can forward them to any function it decorates." },
+        { "term": "functools.wraps", "definition": "Copies the wrapped function's name, docstring, and metadata onto wrapper so it still looks like the original." }
+      ],
+      "howItWorks": "1. @timer above slow_square replaces it with timer(slow_square), i.e. the returned wrapper.\n2. When you call slow_square(n), you are really calling wrapper, which records the start time.\n3. wrapper calls the real function via func(*args, **kwargs) and stores its result.\n4. It computes the elapsed time, prints it, and returns the original result unchanged.",
+      "designPattern": "Decorator pattern: layer reusable cross-cutting behavior (timing, logging, caching, auth) around functions without modifying their source.",
+      "relatedExercises": ["py-gen-fib-001", "py-func-factorial-001"]
+    },
+    "quiz": [
+      {
+        "question": "What does the `@timer` line above `slow_square` actually do?",
+        "options": [
+          "Runs slow_square immediately",
+          "Replaces slow_square with timer(slow_square)",
+          "Marks slow_square as private",
+          "Schedules slow_square on a timer"
+        ],
+        "correctIndex": 1,
+        "explanation": "Decorator syntax rebinds the name to the result of calling the decorator on the function."
+      },
+      {
+        "question": "Why is `@wraps(func)` applied to `wrapper`?",
+        "options": [
+          "To make wrapper run faster",
+          "To preserve func's name, docstring, and metadata",
+          "To prevent func from being called twice",
+          "To convert wrapper into a generator"
+        ],
+        "correctIndex": 1,
+        "explanation": "Without wraps, the decorated function would report wrapper's name and lose its docstring."
+      },
+      {
+        "question": "What do `*args` and `**kwargs` allow `wrapper` to do?",
+        "options": [
+          "Accept and forward any positional and keyword arguments",
+          "Limit the function to two arguments",
+          "Return multiple values",
+          "Make the arguments global"
+        ],
+        "correctIndex": 0,
+        "explanation": "They let one wrapper decorate functions with any signature by capturing and passing along all arguments."
+      },
+      {
+        "question": "wrapper still uses `func` after `timer` has returned. This is an example of…",
+        "options": ["A closure", "Recursion", "Inheritance", "A global variable"],
+        "correctIndex": 0,
+        "explanation": "wrapper closes over func, keeping access to it after the enclosing timer call has finished."
+      }
+    ]
+  }
+]
