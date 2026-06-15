@@ -39,10 +39,11 @@ function cspPlugin(): Plugin {
 // (offline-first, no runtime fetch). It's split into its own chunk so the large
 // data set loads in parallel and caches independently of the app code.
 export default defineConfig({
-  // GitHub Pages serves this repo from the /PyTyping/ subpath, so asset URLs
-  // must be prefixed accordingly. For a user/org root site or a custom domain
-  // served at '/', change this back to '/'.
-  base: '/PyTyping/',
+  // This repo is named <username>.github.io, so GitHub Pages serves it as a
+  // user site at the root (https://xandermckie.github.io/). Assets live at '/'.
+  // If you ever move this to a project repo served at /<repo>/, set the base
+  // to '/<repo>/' instead.
+  base: '/',
   plugins: [react(), cspPlugin()],
   build: {
     chunkSizeWarningLimit: 900,
