@@ -28,6 +28,11 @@ import type { Settings } from './settings';
 import { loadValidated, removeKey, saveJSON } from './storage';
 import { isObject, isString } from './validation';
 
+/** Maximum backup file size accepted on import (2 MB). */
+export const BACKUP_MAX_BYTES = 2 * 1024 * 1024;
+
+const SUPPORTED_BACKUP_VERSION = 2;
+
 interface Backup {
   app: 'pytyping';
   version: 2;
@@ -71,6 +76,9 @@ export function importBackup(text: string): ImportResult {
   }
   if (!isObject(parsed) || parsed.app !== 'pytyping') {
     return { ok: false, error: 'This does not look like a PyTyping backup.' };
+  }
+  if (parsed.version !== undefined && parsed.version !== SUPPORTED_BACKUP_VERSION) {
+    return { ok: false, error: `Unsupported backup version (expected ${SUPPORTED_BACKUP_VERSION}).` };
   }
 
   const accounts = validateAccounts(parsed.accounts);

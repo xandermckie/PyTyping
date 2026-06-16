@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useSession } from '../context/SessionContext';
+import { AVATAR_COLORS } from '../lib/auth';
+import { sanitizeHexColor } from '../lib/validation';
 
 interface AccountMenuProps {
   /** Open the login screen. */
@@ -10,11 +12,12 @@ interface AccountMenuProps {
 
 function Avatar({ name, color }: { name: string; color: string }) {
   const initial = name.trim().charAt(0).toUpperCase() || '?';
+  const safeColor = sanitizeHexColor(color, AVATAR_COLORS[0]);
   return (
     <span
       aria-hidden="true"
       className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium text-background-primary"
-      style={{ background: color }}
+      style={{ background: safeColor }}
     >
       {initial}
     </span>

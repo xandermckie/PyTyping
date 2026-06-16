@@ -26,6 +26,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=moderate
+      - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

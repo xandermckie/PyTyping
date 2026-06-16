@@ -3,7 +3,7 @@ import type { ChangeEvent, ReactNode } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { CODE_FONTS, UI_FONTS } from '../lib/settings';
 import { useSession } from '../context/SessionContext';
-import { exportBackup, importBackup } from '../lib/backup';
+import { exportBackup, importBackup, BACKUP_MAX_BYTES } from '../lib/backup';
 import type { BaseColors, ThemeId } from '../lib/theme';
 
 interface SettingsProps {
@@ -96,6 +96,14 @@ export default function Settings({ onShowLogin }: SettingsProps) {
     e.target.value = '';
     if (!file) return;
     setImportError(null);
+    if (file.size === 0) {
+      setImportError('That file is empty.');
+      return;
+    }
+    if (file.size > BACKUP_MAX_BYTES) {
+      setImportError('Backup file is too large (max 2 MB).');
+      return;
+    }
     try {
       const result = importBackup(await file.text());
       if (result.ok) window.location.reload();

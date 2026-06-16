@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -45,6 +45,10 @@ export default defineConfig({
   // to '/<repo>/' instead.
   base: '/',
   plugins: [react(), cspPlugin()],
+  test: {
+    environment: 'node',
+    include: ['src/**/__tests__/**/*.test.ts'],
+  },
   build: {
     chunkSizeWarningLimit: 900,
     rollupOptions: {

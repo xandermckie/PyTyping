@@ -36,6 +36,59 @@ export function sanitizeHexColor(v: unknown, fallback: string): string {
   return isValidHexColor(v) ? v : fallback;
 }
 
+/** Allowed avatar palette — must stay in sync with account creation in auth.ts. */
+export const AVATAR_COLORS = ['#1d9e75', '#e2b714', '#7aa2f7', '#e24b4a', '#c792ea', '#88b04b', '#e0af68'] as const;
+
+/** Pick a stable palette color from a username (used when sanitizing imported accounts). */
+export function pickAvatarColorFromUsername(username: string): string {
+  let h = 0;
+  for (let i = 0; i < username.length; i++) h = (h * 31 + username.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
+/** Accept only palette colors or valid hex; blocks arbitrary CSS in inline styles. */
+export function sanitizeAvatarColor(v: unknown, fallback: string): string {
+  if (isString(v) && (AVATAR_COLORS as readonly string[]).includes(v)) return v;
+  return sanitizeHexColor(v, fallback);
+}
+
+const HEX_STRING_RE = /^[0-9a-fA-F]+$/;
+
+/** Validate a hex-encoded byte string with an exact character length (2 chars per byte). */
+export function isValidHexString(v: unknown, byteLength: number): boolean {
+  const expected = byteLength * 2;
+  return isString(v) && v.length === expected && HEX_STRING_RE.test(v);
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const LEGACY_ID_RE = /^a_[0-9a-f]{16}$/i;
+
+export function isValidAccountId(v: unknown): v is string {
+  return isString(v) && (UUID_RE.test(v) || LEGACY_ID_RE.test(v));
+}
+
+const WEAK_HASH_RE = /^weak\$[0-9a-f]+$/i;
+
+/** PBKDF2-SHA-256 (64 hex chars) or legacy weak-hash prefix. */
+export function isValidAccountHash(v: unknown): boolean {
+  if (!isString(v)) return false;
+  if (isValidHexString(v, 32)) return true;
+  return WEAK_HASH_RE.test(v);
+}
+
+export function clampNumber(v: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, v));
+}
+
+const HTTPS_URL_RE = /^https:\/\/[^\s]+$/i;
+
+/** Reject javascript:, data:, and other non-HTTPS schemes. */
+export function isHttpsUrl(v: unknown): v is string {
+  if (!isString(v) || !HTTPS_URL_RE.test(v)) return false;
+  const lower = v.toLowerCase();
+  return !lower.includes('javascript:') && !lower.startsWith('data:');
+}
+
 const DIFFICULTIES = ['beginner', 'intermediate', 'advanced'] as const;
 function isDifficulty(v: unknown): v is Difficulty {
   return isString(v) && (DIFFICULTIES as readonly string[]).includes(v);
@@ -59,7 +112,7 @@ export function validateExercise(raw: unknown): Exercise | null {
 
   if (!isString(id) || !isString(title) || !isString(description)) return null;
   if (!isDifficulty(difficulty) || !isStringArray(topics)) return null;
-  if (!isString(sourceUrl) || !isString(sourceLabel) || !isNumber(estimatedTime)) return null;
+  if (!isHttpsUrl(sourceUrl) || !isString(sourceLabel) || !isNumber(estimatedTime)) return null;
   if (!isString(code) || code.length === 0) return null;
   if (!isObject(explanation)) return null;
 

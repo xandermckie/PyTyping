@@ -8,7 +8,18 @@
  */
 import { loadJSON, loadValidated, removeKey, saveJSON } from './storage';
 import { clearProgress } from './progress';
-import { isObject, isString } from './validation';
+import {
+  AVATAR_COLORS,
+  isObject,
+  isString,
+  isValidAccountHash,
+  isValidAccountId,
+  isValidHexString,
+  pickAvatarColorFromUsername,
+  sanitizeAvatarColor,
+} from './validation';
+
+export { AVATAR_COLORS };
 
 export interface Account {
   id: string;
@@ -26,7 +37,6 @@ export type Session = { kind: 'guest' } | { kind: 'account'; accountId: string }
 const ACCOUNTS_KEY = 'accounts';
 const SESSION_KEY = 'session';
 const PBKDF2_ITERATIONS = 100_000;
-const AVATAR_COLORS = ['#1d9e75', '#e2b714', '#7aa2f7', '#e24b4a', '#c792ea', '#88b04b', '#e0af68'];
 
 export const USERNAME_RULES = '3–20 chars: letters, numbers, and . _ -';
 export const PASSWORD_MIN = 4;
@@ -108,14 +118,22 @@ export function sanitizeUsername(raw: string): string {
 function validateAccount(raw: unknown): Account | null {
   if (!isObject(raw)) return null;
   const { id, username, salt, hash, createdAt, avatarColor } = raw;
-  if (![id, username, salt, hash].every(isString)) return null;
+  if (!isString(username) || !isString(salt) || !isString(hash)) return null;
+  if (!isValidAccountId(id)) return null;
+  if (!isValidHexString(salt, 16)) return null;
+  if (!isValidAccountHash(hash)) return null;
+
+  const cleanedUsername = sanitizeUsername(username);
+  if (cleanedUsername.length < 3) return null;
+
+  const fallbackColor = pickAvatarColorFromUsername(cleanedUsername);
   return {
-    id: id as string,
-    username: username as string,
-    salt: salt as string,
-    hash: hash as string,
+    id,
+    username: cleanedUsername,
+    salt,
+    hash,
     createdAt: isString(createdAt) ? createdAt : new Date().toISOString(),
-    avatarColor: isString(avatarColor) ? avatarColor : AVATAR_COLORS[0],
+    avatarColor: sanitizeAvatarColor(avatarColor, fallbackColor),
   };
 }
 

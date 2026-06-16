@@ -4,7 +4,7 @@
  * quiz score). Every read is validated so corrupted storage can't crash stats.
  */
 import { loadValidated, saveJSON, removeKey } from './storage';
-import { isNumber, isObject, isString } from './validation';
+import { clampNumber, isNumber, isObject, isString } from './validation';
 
 export interface CompletionRecord {
   exerciseId: string;
@@ -39,6 +39,35 @@ export type HistoryMap = Record<string, AttemptSummary[]>;
 /** Keep only the most recent N attempts per exercise to bound storage. */
 const HISTORY_CAP = 25;
 
+const MAX_WPM = 500;
+const MAX_ERRORS = 10_000;
+const MAX_QUIZ_TOTAL = 100;
+const MAX_ATTEMPTS = 10_000;
+
+function sanitizeQuizPair(quizCorrect: number, quizTotal: number): { quizCorrect: number; quizTotal: number } | null {
+  if (quizCorrect > quizTotal) return null;
+  const total = clampNumber(Math.round(quizTotal), 0, MAX_QUIZ_TOTAL);
+  const correct = clampNumber(Math.round(quizCorrect), 0, total);
+  return { quizCorrect: correct, quizTotal: total };
+}
+
+function sanitizeStats(
+  wpm: number,
+  accuracy: number,
+  errors: number,
+  quizCorrect: number,
+  quizTotal: number,
+): { wpm: number; accuracy: number; errors: number; quizCorrect: number; quizTotal: number } | null {
+  const quiz = sanitizeQuizPair(quizCorrect, quizTotal);
+  if (!quiz) return null;
+  return {
+    wpm: clampNumber(wpm, 0, MAX_WPM),
+    accuracy: clampNumber(accuracy, 0, 100),
+    errors: clampNumber(Math.round(errors), 0, MAX_ERRORS),
+    ...quiz,
+  };
+}
+
 export function progressKey(profileId: string): string {
   return `progress:${profileId}`;
 }
@@ -66,15 +95,21 @@ function validateRecord(raw: unknown): CompletionRecord | null {
   const { exerciseId, accuracy, wpm, errors, quizCorrect, quizTotal, completedAt, attempts } = raw;
   if (!isString(exerciseId)) return null;
   if (![accuracy, wpm, errors, quizCorrect, quizTotal].every(isNumber)) return null;
+
+  const stats = sanitizeStats(
+    wpm as number,
+    accuracy as number,
+    errors as number,
+    quizCorrect as number,
+    quizTotal as number,
+  );
+  if (!stats) return null;
+
   return {
     exerciseId,
-    accuracy: accuracy as number,
-    wpm: wpm as number,
-    errors: errors as number,
-    quizCorrect: quizCorrect as number,
-    quizTotal: quizTotal as number,
+    ...stats,
     completedAt: isString(completedAt) ? completedAt : new Date().toISOString(),
-    attempts: isNumber(attempts) && attempts > 0 ? attempts : 1,
+    attempts: isNumber(attempts) && attempts > 0 ? clampNumber(Math.round(attempts), 1, MAX_ATTEMPTS) : 1,
   };
 }
 
@@ -114,12 +149,18 @@ function validateAttempt(raw: unknown): AttemptSummary | null {
   if (!isObject(raw)) return null;
   const { wpm, accuracy, errors, quizCorrect, quizTotal, at } = raw;
   if (![wpm, accuracy, errors, quizCorrect, quizTotal].every(isNumber)) return null;
+
+  const stats = sanitizeStats(
+    wpm as number,
+    accuracy as number,
+    errors as number,
+    quizCorrect as number,
+    quizTotal as number,
+  );
+  if (!stats) return null;
+
   return {
-    wpm: wpm as number,
-    accuracy: accuracy as number,
-    errors: errors as number,
-    quizCorrect: quizCorrect as number,
-    quizTotal: quizTotal as number,
+    ...stats,
     at: isString(at) ? at : new Date().toISOString(),
   };
 }
