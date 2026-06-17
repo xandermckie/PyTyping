@@ -158,12 +158,6 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
 
       {phase === 'typing' && (
         <>
-          {typingMode === 'challenge' && (
-            <div className="mx-auto mb-4 max-w-3xl rounded-md border border-border-tertiary bg-background-secondary p-4">
-              <p className="mb-2 text-xs uppercase tracking-wide text-content-tertiary">Challenge prompt</p>
-              <pre className="whitespace-pre-wrap font-mono text-sm text-content-secondary">{challengePrompt}</pre>
-            </div>
-          )}
           <TypingInput
             key={`${exercise.id}:${restartKey}:${typingMode}`}
             code={exercise.code}
