@@ -4,7 +4,7 @@
  * colors to valid hex, so nothing read from storage or an imported file can
  * inject arbitrary CSS.
  */
-import { DEFAULT_CUSTOM, sanitizeBaseColors } from './theme';
+import { DEFAULT_CUSTOM, THEME_IDS, sanitizeBaseColors } from './theme';
 import type { BaseColors, ThemeId } from './theme';
 import { isBoolean, isNumber, isObject, isString } from './validation';
 
@@ -43,7 +43,6 @@ export const UI_FONTS: Array<{ label: string; value: string }> = [
   { label: 'System Sans', value: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" },
 ];
 
-const THEME_IDS: ThemeId[] = ['light', 'monokia', 'custom'];
 const TAB_SIZES = [2, 4, 8];
 
 export const SETTINGS_KEY = 'settings';

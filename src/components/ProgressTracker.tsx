@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Exercise } from '../types/exercise';
 import { getHistory, getProgress } from '../lib/progress';
 import { useSession } from '../context/SessionContext';
+import { getAchievements, getGoalSummary, getReviewQueue, getStreakSummary } from '../lib/learning';
 
 interface ProgressTrackerProps {
   exercises: Exercise[];
@@ -116,6 +117,16 @@ export default function ProgressTracker({ exercises }: ProgressTrackerProps) {
       .sort((a, b) => b.lastAt.localeCompare(a.lastAt))
       .slice(0, 12);
   }, [exercises, scopeId, progressVersion]);
+  const streak = useMemo(() => getStreakSummary(getProgress(scopeId)), [scopeId, progressVersion]);
+  const goal = useMemo(() => getGoalSummary(getProgress(scopeId)), [scopeId, progressVersion]);
+  const achievements = useMemo(
+    () => getAchievements(getProgress(scopeId), getHistory(scopeId)),
+    [scopeId, progressVersion],
+  );
+  const reviewQueue = useMemo(
+    () => getReviewQueue(exercises, getProgress(scopeId), getHistory(scopeId)),
+    [exercises, scopeId, progressVersion],
+  );
 
   return (
     <div className="mx-auto w-full max-w-2xl pb-12">
@@ -138,6 +149,54 @@ export default function ProgressTracker({ exercises }: ProgressTrackerProps) {
             <Stat value={`${stats.bestWpm}`} label="Best WPM" />
             <Stat value={`${stats.mastered}`} label="Topics mastered" />
           </div>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Stat value={`${streak.current} days`} label="Current streak" />
+            <Stat value={`${streak.best} days`} label="Best streak" />
+            <Stat value={`${goal.completedToday}/${goal.dailyGoal}`} label="Daily goal" />
+          </div>
+
+          <section className="mt-10">
+            <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-content-secondary">
+              Achievements
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className={`rounded-md border p-3 ${
+                    achievement.unlocked
+                      ? 'border-success/40 bg-background-secondary'
+                      : 'border-border-tertiary bg-background-secondary/50'
+                  }`}
+                >
+                  <p className="text-sm font-medium text-content-primary">
+                    {achievement.unlocked ? '✓ ' : '○ '}
+                    {achievement.title}
+                  </p>
+                  <p className="mt-1 text-xs text-content-tertiary">{achievement.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {reviewQueue.length > 0 && (
+            <section className="mt-10">
+              <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-content-secondary">
+                Review queue
+              </h2>
+              <div className="flex flex-col gap-2">
+                {reviewQueue.map((item) => (
+                  <div
+                    key={item.exercise.id}
+                    className="rounded-md border border-border-tertiary bg-background-secondary px-3 py-2"
+                  >
+                    <p className="text-sm text-content-primary">{item.exercise.title}</p>
+                    <p className="text-xs text-content-tertiary">{item.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="mt-10">
             <h2 className="mb-4 text-sm font-medium uppercase tracking-wide text-content-secondary">

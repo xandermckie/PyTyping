@@ -3,11 +3,12 @@ import TypingInput from '../components/TypingInput';
 import QuizPanel from '../components/QuizPanel';
 import BreakdownPanel from '../components/BreakdownPanel';
 import ResultsPanel from '../components/ResultsPanel';
-import { getExerciseById } from '../lib/exercises';
-import { getAttempts, recordCompletion } from '../lib/progress';
+import { EXERCISES, getExerciseById } from '../lib/exercises';
+import { getAttempts, getHistory, getProgress, recordCompletion } from '../lib/progress';
 import type { AttemptSummary } from '../lib/progress';
 import { useSession } from '../context/SessionContext';
 import type { QuizScore, TypingStats } from '../types/exercise';
+import { getRecommendedExerciseId } from '../lib/learning';
 
 interface TypingPageProps {
   exerciseId: string;
@@ -18,6 +19,23 @@ interface TypingPageProps {
 }
 
 type Phase = 'typing' | 'results' | 'quiz' | 'breakdown';
+type TypingMode = 'guided' | 'challenge';
+
+function buildChallengePrompt(code: string): string {
+  const lines = code.split('\n');
+  return lines
+    .map((line) => {
+      const indent = line.match(/^\s*/)?.[0] ?? '';
+      const trimmed = line.trim();
+      if (!trimmed) return '';
+      if (/^(def|class)\s/.test(trimmed)) return `${indent}${trimmed}`;
+      if (/^(if|elif|else|for|while|try|except|finally|with)\b/.test(trimmed)) return `${indent}${trimmed}`;
+      if (/^(import|from)\s/.test(trimmed)) return `${indent}${trimmed}`;
+      if (trimmed.startsWith('@')) return `${indent}${trimmed}`;
+      return `${indent}...`;
+    })
+    .join('\n');
+}
 
 /**
  * Drives a single exercise: type → results → quiz → breakdown. Progress is
@@ -35,6 +53,7 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
   // Bumped to force a fresh TypingInput when the user restarts the snippet.
   const [restartKey, setRestartKey] = useState(0);
   const [saveWarning, setSaveWarning] = useState<string | null>(null);
+  const [typingMode, setTypingMode] = useState<TypingMode>('guided');
 
   const related = useMemo(() => {
     if (!exercise) return [];
@@ -42,6 +61,11 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
       .map(getExerciseById)
       .filter((e): e is NonNullable<typeof e> => Boolean(e));
   }, [exercise]);
+  const challengePrompt = useMemo(() => (exercise ? buildChallengePrompt(exercise.code) : ''), [exercise]);
+  const recommendedExerciseId = useMemo(() => {
+    if (!exercise) return null;
+    return getRecommendedExerciseId(exercise.id, related, EXERCISES, getProgress(scopeId), getHistory(scopeId));
+  }, [exercise, related, scopeId, saveWarning, phase]);
 
   // Whenever we leave the typing phase, make sure the chrome is visible again.
   useEffect(() => {
@@ -114,24 +138,42 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
             {exercise.difficulty} · {exercise.sourceLabel}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onExit}
-          className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
-        >
-          Exit
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setTypingMode((mode) => (mode === 'guided' ? 'challenge' : 'guided'))}
+            className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
+          >
+            Mode: {typingMode === 'guided' ? 'Guided' : 'Challenge'}
+          </button>
+          <button
+            type="button"
+            onClick={onExit}
+            className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
+          >
+            Exit
+          </button>
+        </div>
       </div>
 
       {phase === 'typing' && (
-        <TypingInput
-          key={`${exercise.id}:${restartKey}`}
-          code={exercise.code}
-          onComplete={handleTypingComplete}
-          onQuit={onExit}
-          onRestart={handleRestart}
-          onFocusChange={onFocusChange}
-        />
+        <>
+          {typingMode === 'challenge' && (
+            <div className="mx-auto mb-4 max-w-3xl rounded-md border border-border-tertiary bg-background-secondary p-4">
+              <p className="mb-2 text-xs uppercase tracking-wide text-content-tertiary">Challenge prompt</p>
+              <pre className="whitespace-pre-wrap font-mono text-sm text-content-secondary">{challengePrompt}</pre>
+            </div>
+          )}
+          <TypingInput
+            key={`${exercise.id}:${restartKey}:${typingMode}`}
+            code={exercise.code}
+            obscurePending={typingMode === 'challenge'}
+            onComplete={handleTypingComplete}
+            onQuit={onExit}
+            onRestart={handleRestart}
+            onFocusChange={onFocusChange}
+          />
+        </>
       )}
 
       {phase === 'results' && typingStats && (
@@ -159,6 +201,7 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
             related={related}
             onSelectExercise={onSelectExercise}
             onNext={onExit}
+            recommendedExerciseId={recommendedExerciseId}
           />
         </>
       )}

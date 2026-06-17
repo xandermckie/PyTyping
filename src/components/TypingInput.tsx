@@ -9,6 +9,8 @@ import type { TypingStats } from '../types/exercise';
 interface TypingInputProps {
   /** The Python source to type, character by character. */
   code: string;
+  /** Hide not-yet-typed characters (used by challenge mode). */
+  obscurePending?: boolean;
   /** Fired once the final character is matched, with the final stats. */
   onComplete: (stats: TypingStats) => void;
   /** Fired (debounced ~100ms) with progress 0–1 and accuracy 0–100. */
@@ -48,10 +50,12 @@ interface LineProps {
   localError: number;
   showCaret: boolean;
   lineNumbers: boolean;
+  obscurePending: boolean;
 }
 
-function renderChar(cell: CharCell, isError: boolean): string {
+function renderChar(cell: CharCell, isError: boolean, hidden: boolean): string {
   if (cell.char === '\n') return isError ? '↵' : '​'; // zero-width keeps the span
+  if (hidden) return '•';
   return cell.char;
 }
 
@@ -63,6 +67,7 @@ const Line = memo(function Line({
   localError,
   showCaret,
   lineNumbers,
+  obscurePending,
 }: LineProps) {
   return (
     <div className="flex">
@@ -94,11 +99,13 @@ const Line = memo(function Line({
           }
 
           const caretHere = showCaret && lineState === 'active' && i === localCursor;
+          const isTyped = lineState === 'done' || (lineState === 'active' && i < localCursor);
+          const shouldHide = obscurePending && !isTyped && !isErrorHere;
           return (
             <Fragment key={i}>
               {caretHere && <span className="pytyping-caret" aria-hidden="true" />}
               <span className={`${cell.className} ${stateClass}`.trim()}>
-                {renderChar(cell, isErrorHere)}
+                {renderChar(cell, isErrorHere, shouldHide)}
               </span>
             </Fragment>
           );
@@ -114,6 +121,7 @@ const Line = memo(function Line({
 
 export default function TypingInput({
   code,
+  obscurePending = false,
   onComplete,
   onProgress,
   onQuit,
@@ -403,6 +411,7 @@ export default function TypingInput({
                 localError={localError}
                 showCaret={!done}
                 lineNumbers={settings.lineNumbers}
+                obscurePending={obscurePending}
               />
             );
           })}

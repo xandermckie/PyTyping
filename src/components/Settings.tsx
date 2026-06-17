@@ -4,7 +4,8 @@ import { useSettings } from '../context/SettingsContext';
 import { CODE_FONTS, UI_FONTS } from '../lib/settings';
 import { useSession } from '../context/SessionContext';
 import { exportBackup, importBackup, BACKUP_MAX_BYTES } from '../lib/backup';
-import type { BaseColors, ThemeId } from '../lib/theme';
+import { THEME_OPTIONS } from '../lib/theme';
+import type { BaseColors } from '../lib/theme';
 
 interface SettingsProps {
   /** Open the login screen (shown to guests). */
@@ -20,12 +21,6 @@ const COLOR_FIELDS: Array<{ key: keyof BaseColors; label: string }> = [
   { key: 'success', label: 'Success' },
   { key: 'warning', label: 'Warning' },
   { key: 'border', label: 'Border' },
-];
-
-const THEMES: Array<{ id: ThemeId; label: string }> = [
-  { id: 'light', label: 'Light' },
-  { id: 'monokia', label: 'Monokia' },
-  { id: 'custom', label: 'Custom' },
 ];
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
@@ -175,8 +170,8 @@ export default function Settings({ onShowLogin }: SettingsProps) {
       {/* Theme */}
       <section className="mb-8">
         <SectionTitle>Theme</SectionTitle>
-        <div className="flex gap-2">
-          {THEMES.map((t) => (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {THEME_OPTIONS.map((t) => (
             <button
               key={t.id}
               type="button"

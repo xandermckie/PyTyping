@@ -14,6 +14,7 @@ import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import type { Command } from './components/CommandPalette';
 import { EXERCISES } from './lib/exercises';
+import { THEME_OPTIONS } from './lib/theme';
 
 type View = 'home' | 'typing' | 'settings' | 'progress' | 'login' | 'about';
 
@@ -58,13 +59,17 @@ function AppShell() {
   }, []);
 
   const commands = useMemo<Command[]>(() => {
+    const themeCommands: Command[] = THEME_OPTIONS.filter((option) => option.id !== 'custom').map((option) => ({
+      id: `theme-${option.id}`,
+      label: `Theme: ${option.label}`,
+      hint: 'theme',
+      run: () => update({ themeId: option.id }),
+    }));
     const cmds: Command[] = [
       { id: 'nav-home', label: 'Go to Exercises', hint: 'navigate', run: () => setView('home') },
       { id: 'nav-progress', label: 'Go to Progress', hint: 'navigate', run: () => setView('progress') },
       { id: 'nav-settings', label: 'Go to Settings', hint: 'navigate', run: () => setView('settings') },
       { id: 'nav-about', label: 'About & legal', hint: 'navigate', run: () => setView('about') },
-      { id: 'theme-light', label: 'Theme: Light', hint: 'theme', run: () => update({ themeId: 'light' }) },
-      { id: 'theme-monokia', label: 'Theme: Monokia', hint: 'theme', run: () => update({ themeId: 'monokia' }) },
       { id: 'theme-custom', label: 'Theme: Custom', hint: 'theme', run: () => update({ themeId: 'custom' }) },
       {
         id: 'toggle-line',
@@ -78,6 +83,7 @@ function AppShell() {
         hint: 'setting',
         run: () => update({ liveWpm: !settings.liveWpm }),
       },
+      ...themeCommands,
     ];
     if (isGuest) {
       cmds.push({ id: 'login', label: 'Log in / Sign up', hint: 'account', run: () => setView('login') });

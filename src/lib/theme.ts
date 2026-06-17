@@ -7,7 +7,22 @@
 
 import { isObject, sanitizeHexColor } from './validation';
 
-export type ThemeId = 'light' | 'monokia' | 'custom';
+export type ThemePresetId =
+  | 'light'
+  | 'monokia'
+  | 'dracula'
+  | 'nord'
+  | 'solarized-dark'
+  | 'solarized-light'
+  | 'gruvbox-dark'
+  | 'gruvbox-light'
+  | 'tokyo-night'
+  | 'forest'
+  | 'rose-dawn'
+  | 'oceanic'
+  | 'midnight-purple';
+
+export type ThemeId = ThemePresetId | 'custom';
 
 /** The 8 colors the custom-theme editor lets a user pick (see Guide §IV). */
 export interface BaseColors {
@@ -95,7 +110,7 @@ const SYNTAX_DARK = {
   '--color-syntax-class': '#7dcfff',
 };
 
-export const PRESETS: Record<Exclude<ThemeId, 'custom'>, Palette> = {
+export const PRESETS: Record<ThemePresetId, Palette> = {
   light: {
     '--color-background-primary': '#f8f7f5',
     '--color-background-secondary': '#efefec',
@@ -129,7 +144,202 @@ export const PRESETS: Record<Exclude<ThemeId, 'custom'>, Palette> = {
     '--color-border-tertiary': 'rgba(255, 255, 255, 0.1)',
     ...SYNTAX_DARK,
   },
+  dracula: {
+    '--color-background-primary': '#1e1f29',
+    '--color-background-secondary': '#282a36',
+    '--color-background-tertiary': '#323543',
+    '--color-text-primary': '#f8f8f2',
+    '--color-text-secondary': '#b5b7c4',
+    '--color-text-tertiary': '#85879a',
+    '--color-accent': '#bd93f9',
+    '--color-error': '#ff5555',
+    '--color-success': '#50fa7b',
+    '--color-warning': '#ffb86c',
+    '--color-border-primary': 'rgba(255, 255, 255, 0.33)',
+    '--color-border-secondary': 'rgba(255, 255, 255, 0.2)',
+    '--color-border-tertiary': 'rgba(255, 255, 255, 0.11)',
+    ...SYNTAX_DARK,
+  },
+  nord: {
+    '--color-background-primary': '#2e3440',
+    '--color-background-secondary': '#3b4252',
+    '--color-background-tertiary': '#434c5e',
+    '--color-text-primary': '#eceff4',
+    '--color-text-secondary': '#c3cad6',
+    '--color-text-tertiary': '#919cad',
+    '--color-accent': '#88c0d0',
+    '--color-error': '#bf616a',
+    '--color-success': '#a3be8c',
+    '--color-warning': '#ebcb8b',
+    '--color-border-primary': 'rgba(255, 255, 255, 0.34)',
+    '--color-border-secondary': 'rgba(255, 255, 255, 0.2)',
+    '--color-border-tertiary': 'rgba(255, 255, 255, 0.12)',
+    ...SYNTAX_DARK,
+  },
+  'solarized-dark': {
+    '--color-background-primary': '#002b36',
+    '--color-background-secondary': '#073642',
+    '--color-background-tertiary': '#0d4755',
+    '--color-text-primary': '#fdf6e3',
+    '--color-text-secondary': '#93a1a1',
+    '--color-text-tertiary': '#657b83',
+    '--color-accent': '#2aa198',
+    '--color-error': '#dc322f',
+    '--color-success': '#859900',
+    '--color-warning': '#b58900',
+    '--color-border-primary': 'rgba(255, 255, 255, 0.3)',
+    '--color-border-secondary': 'rgba(255, 255, 255, 0.18)',
+    '--color-border-tertiary': 'rgba(255, 255, 255, 0.1)',
+    ...SYNTAX_DARK,
+  },
+  'solarized-light': {
+    '--color-background-primary': '#fdf6e3',
+    '--color-background-secondary': '#eee8d5',
+    '--color-background-tertiary': '#e3dcc6',
+    '--color-text-primary': '#073642',
+    '--color-text-secondary': '#586e75',
+    '--color-text-tertiary': '#93a1a1',
+    '--color-accent': '#268bd2',
+    '--color-error': '#dc322f',
+    '--color-success': '#859900',
+    '--color-warning': '#b58900',
+    '--color-border-primary': 'rgba(0, 0, 0, 0.34)',
+    '--color-border-secondary': 'rgba(0, 0, 0, 0.22)',
+    '--color-border-tertiary': 'rgba(0, 0, 0, 0.12)',
+    ...SYNTAX_LIGHT,
+  },
+  'gruvbox-dark': {
+    '--color-background-primary': '#1d2021',
+    '--color-background-secondary': '#282828',
+    '--color-background-tertiary': '#32302f',
+    '--color-text-primary': '#ebdbb2',
+    '--color-text-secondary': '#bdae93',
+    '--color-text-tertiary': '#928374',
+    '--color-accent': '#fe8019',
+    '--color-error': '#fb4934',
+    '--color-success': '#b8bb26',
+    '--color-warning': '#fabd2f',
+    '--color-border-primary': 'rgba(255, 255, 255, 0.3)',
+    '--color-border-secondary': 'rgba(255, 255, 255, 0.18)',
+    '--color-border-tertiary': 'rgba(255, 255, 255, 0.1)',
+    ...SYNTAX_DARK,
+  },
+  'gruvbox-light': {
+    '--color-background-primary': '#fbf1c7',
+    '--color-background-secondary': '#f2e5bc',
+    '--color-background-tertiary': '#eadcad',
+    '--color-text-primary': '#3c3836',
+    '--color-text-secondary': '#665c54',
+    '--color-text-tertiary': '#928374',
+    '--color-accent': '#d65d0e',
+    '--color-error': '#cc241d',
+    '--color-success': '#98971a',
+    '--color-warning': '#d79921',
+    '--color-border-primary': 'rgba(0, 0, 0, 0.35)',
+    '--color-border-secondary': 'rgba(0, 0, 0, 0.22)',
+    '--color-border-tertiary': 'rgba(0, 0, 0, 0.12)',
+    ...SYNTAX_LIGHT,
+  },
+  'tokyo-night': {
+    '--color-background-primary': '#1a1b26',
+    '--color-background-secondary': '#24283b',
+    '--color-background-tertiary': '#2f334d',
+    '--color-text-primary': '#c0caf5',
+    '--color-text-secondary': '#9aa5ce',
+    '--color-text-tertiary': '#7f86a9',
+    '--color-accent': '#7aa2f7',
+    '--color-error': '#f7768e',
+    '--color-success': '#9ece6a',
+    '--color-warning': '#e0af68',
+    '--color-border-primary': 'rgba(255, 255, 255, 0.3)',
+    '--color-border-secondary': 'rgba(255, 255, 255, 0.18)',
+    '--color-border-tertiary': 'rgba(255, 255, 255, 0.1)',
+    ...SYNTAX_DARK,
+  },
+  forest: {
+    '--color-background-primary': '#102219',
+    '--color-background-secondary': '#163126',
+    '--color-background-tertiary': '#1c4133',
+    '--color-text-primary': '#e4f0e9',
+    '--color-text-secondary': '#a3c0ae',
+    '--color-text-tertiary': '#6f9180',
+    '--color-accent': '#6bcf8e',
+    '--color-error': '#ef6f6c',
+    '--color-success': '#8ddf5a',
+    '--color-warning': '#d7b14a',
+    '--color-border-primary': 'rgba(255, 255, 255, 0.28)',
+    '--color-border-secondary': 'rgba(255, 255, 255, 0.16)',
+    '--color-border-tertiary': 'rgba(255, 255, 255, 0.1)',
+    ...SYNTAX_DARK,
+  },
+  'rose-dawn': {
+    '--color-background-primary': '#fff6fa',
+    '--color-background-secondary': '#f8e9f0',
+    '--color-background-tertiary': '#f0dce6',
+    '--color-text-primary': '#44343f',
+    '--color-text-secondary': '#7a6270',
+    '--color-text-tertiary': '#aa95a1',
+    '--color-accent': '#cf6f9b',
+    '--color-error': '#dd5f6d',
+    '--color-success': '#74a971',
+    '--color-warning': '#c48f45',
+    '--color-border-primary': 'rgba(0, 0, 0, 0.32)',
+    '--color-border-secondary': 'rgba(0, 0, 0, 0.2)',
+    '--color-border-tertiary': 'rgba(0, 0, 0, 0.11)',
+    ...SYNTAX_LIGHT,
+  },
+  oceanic: {
+    '--color-background-primary': '#0f1f2e',
+    '--color-background-secondary': '#152a3d',
+    '--color-background-tertiary': '#1d3450',
+    '--color-text-primary': '#d7e6f4',
+    '--color-text-secondary': '#9eb4ca',
+    '--color-text-tertiary': '#7289a0',
+    '--color-accent': '#56c7d9',
+    '--color-error': '#f07178',
+    '--color-success': '#8fcf7b',
+    '--color-warning': '#f2c179',
+    '--color-border-primary': 'rgba(255, 255, 255, 0.3)',
+    '--color-border-secondary': 'rgba(255, 255, 255, 0.17)',
+    '--color-border-tertiary': 'rgba(255, 255, 255, 0.1)',
+    ...SYNTAX_DARK,
+  },
+  'midnight-purple': {
+    '--color-background-primary': '#150f24',
+    '--color-background-secondary': '#201738',
+    '--color-background-tertiary': '#2a1f48',
+    '--color-text-primary': '#ebe5ff',
+    '--color-text-secondary': '#baaddf',
+    '--color-text-tertiary': '#887bb2',
+    '--color-accent': '#b48efc',
+    '--color-error': '#ff6c8f',
+    '--color-success': '#8ce39a',
+    '--color-warning': '#f0c066',
+    '--color-border-primary': 'rgba(255, 255, 255, 0.32)',
+    '--color-border-secondary': 'rgba(255, 255, 255, 0.2)',
+    '--color-border-tertiary': 'rgba(255, 255, 255, 0.11)',
+    ...SYNTAX_DARK,
+  },
 };
+
+export const THEME_OPTIONS: Array<{ id: ThemeId; label: string }> = [
+  { id: 'light', label: 'Light' },
+  { id: 'monokia', label: 'Monokia' },
+  { id: 'dracula', label: 'Dracula' },
+  { id: 'nord', label: 'Nord' },
+  { id: 'solarized-dark', label: 'Solarized Dark' },
+  { id: 'solarized-light', label: 'Solarized Light' },
+  { id: 'gruvbox-dark', label: 'Gruvbox Dark' },
+  { id: 'gruvbox-light', label: 'Gruvbox Light' },
+  { id: 'tokyo-night', label: 'Tokyo Night' },
+  { id: 'forest', label: 'Forest' },
+  { id: 'rose-dawn', label: 'Rose Dawn' },
+  { id: 'oceanic', label: 'Oceanic' },
+  { id: 'midnight-purple', label: 'Midnight Purple' },
+  { id: 'custom', label: 'Custom' },
+];
+
+export const THEME_IDS: ThemeId[] = THEME_OPTIONS.map((option) => option.id);
 
 /** Base colors pre-filled into the custom editor (derived from Monokia). */
 export const DEFAULT_CUSTOM: BaseColors = {
