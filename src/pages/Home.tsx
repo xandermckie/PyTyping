@@ -179,10 +179,10 @@ function StatPill({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs ${
         highlight
-          ? 'border-accent/30 bg-[var(--color-accent-subtle)] text-accent'
-          : 'border-border-tertiary bg-background-secondary text-content-secondary'
+          ? 'bg-[var(--color-accent-subtle)] text-accent'
+          : 'bg-background-secondary text-content-secondary'
       }`}
     >
       <span className="text-content-tertiary">{label}</span>

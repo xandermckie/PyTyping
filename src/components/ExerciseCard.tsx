@@ -9,15 +9,15 @@ interface ExerciseCardProps {
 
 const DIFFICULTY_CONFIG: Record<Difficulty, { color: string; dot: string }> = {
   beginner: {
-    color: 'text-success border-success/40 bg-success/5',
+    color: 'text-success bg-success/8',
     dot: 'bg-success',
   },
   intermediate: {
-    color: 'text-warning border-warning/40 bg-warning/5',
+    color: 'text-warning bg-warning/8',
     dot: 'bg-warning',
   },
   advanced: {
-    color: 'text-error border-error/40 bg-error/5',
+    color: 'text-error bg-error/8',
     dot: 'bg-error',
   },
 };
@@ -57,7 +57,7 @@ function ExerciseCard({ exercise, completed, onSelect }: ExerciseCardProps) {
 
       {/* Footer: difficulty + topics + time */}
       <div className="mt-4 flex flex-wrap items-center gap-1.5 text-xs">
-        <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-medium ${diff.color}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 font-medium ${diff.color}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${diff.dot}`} aria-hidden="true" />
           {exercise.difficulty}
         </span>
