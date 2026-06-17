@@ -3,15 +3,22 @@ import {
   COREY_SCHAFER_URL,
   CS50P_URL,
   EXERCISM_PYTHON_URL,
+  GITHUB_CODESPACES_URL,
+  GITHUB_HELLO_WORLD_URL,
+  GITHUB_SIGNUP_URL,
   LEETCODE_URL,
   MOSH_PYTHON_URL,
+  PYCHARM_URL,
   PYTHON_DISCORD_URL,
   PYTHON_DOCS_URL,
   PYTHON_STANDARD_LIBRARY_URL,
   PYTHON_TUTORIAL_URL,
   REAL_PYTHON_URL,
+  REPLIT_URL,
   STACK_OVERFLOW_PYTHON_URL,
   TECH_WITH_TIM_URL,
+  THONNY_URL,
+  VSCODE_URL,
 } from '../lib/links';
 import guideSections from '../data/python-guide.json';
 
@@ -45,6 +52,23 @@ const RESOURCE_GROUPS: Array<{ heading: string; items: Resource[] }> = [
       { label: 'Mosh Hamedani — Python for Beginners', url: MOSH_PYTHON_URL, description: '6-hour crash course covering all the fundamentals in one sitting.', tag: 'YouTube' },
       { label: 'Corey Schafer — Python Tutorials', url: COREY_SCHAFER_URL, description: 'Deep-dive series on core Python, OOP, decorators, generators, and more.', tag: 'YouTube' },
       { label: 'Tech With Tim — Python Beginner', url: TECH_WITH_TIM_URL, description: 'Fast-paced beginner playlist; good for visual learners who like short videos.', tag: 'YouTube' },
+    ],
+  },
+  {
+    heading: 'IDEs & environments',
+    items: [
+      { label: 'VS Code', url: VSCODE_URL, description: 'Free, fast editor with excellent Python support via the official Microsoft extension. Best all-rounder for beginners and pros alike.', tag: 'Editor · Free' },
+      { label: 'PyCharm Community', url: PYCHARM_URL, description: 'Full-featured Python IDE from JetBrains. The Community edition is free and includes a debugger, refactoring tools, and a built-in terminal.', tag: 'IDE · Free' },
+      { label: 'Thonny', url: THONNY_URL, description: 'Tiny IDE designed specifically for beginners — shows variable values inline and steps through code visually. Perfect first editor.', tag: 'IDE · Free' },
+      { label: 'Replit', url: REPLIT_URL, description: 'Zero-install browser IDE. Great for experimenting and sharing snippets without touching your local machine.', tag: 'Online · Free' },
+      { label: 'GitHub Codespaces', url: GITHUB_CODESPACES_URL, description: 'VS Code running in the cloud, pre-configured per repo. Spin up a full dev environment in seconds from any browser.', tag: 'Online' },
+    ],
+  },
+  {
+    heading: 'GitHub & version control',
+    items: [
+      { label: 'Create a GitHub account', url: GITHUB_SIGNUP_URL, description: 'GitHub is where the world stores code. Free account gives you unlimited public and private repositories.', tag: 'Free' },
+      { label: 'GitHub: Hello World', url: GITHUB_HELLO_WORLD_URL, description: "GitHub's official 10-minute guide — create a repo, make a branch, open a pull request, and merge it.", tag: 'Guide' },
     ],
   },
   {
