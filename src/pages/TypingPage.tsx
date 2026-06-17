@@ -21,6 +21,21 @@ interface TypingPageProps {
 type Phase = 'typing' | 'results' | 'quiz' | 'breakdown';
 type TypingMode = 'guided' | 'challenge';
 
+function buildChallengePrompt(code: string): string {
+  return code
+    .split('\n')
+    .map((line) => {
+      const indent = line.match(/^\s*/)?.[0] ?? '';
+      const trimmed = line.trim();
+      if (!trimmed) return '';
+      if (/^(def|class)\s/.test(trimmed)) return `${indent}${trimmed}`;
+      if (/^(if|elif|else|for|while|try|except|finally|with)\b/.test(trimmed)) return `${indent}${trimmed}`;
+      if (/^(import|from)\s/.test(trimmed)) return `${indent}${trimmed}`;
+      if (trimmed.startsWith('@')) return `${indent}${trimmed}`;
+      return `${indent}...`;
+    })
+    .join('\n');
+}
 
 /**
  * Drives a single exercise: type → results → quiz → breakdown. Progress is
@@ -39,6 +54,12 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
   const [restartKey, setRestartKey] = useState(0);
   const [saveWarning, setSaveWarning] = useState<string | null>(null);
   const [typingMode, setTypingMode] = useState<TypingMode>('guided');
+  const [hintOpen, setHintOpen] = useState(false);
+
+  const challengePrompt = useMemo(
+    () => (exercise ? buildChallengePrompt(exercise.code) : ''),
+    [exercise],
+  );
 
   const related = useMemo(() => {
     if (!exercise) return [];
@@ -125,11 +146,23 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setTypingMode((mode) => (mode === 'guided' ? 'challenge' : 'guided'))}
+            onClick={() => {
+              setTypingMode((mode) => (mode === 'guided' ? 'challenge' : 'guided'));
+              setHintOpen(false);
+            }}
             className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
           >
             Mode: {typingMode === 'guided' ? 'Guided' : 'Challenge'}
           </button>
+          {typingMode === 'challenge' && (
+            <button
+              type="button"
+              onClick={() => setHintOpen((o) => !o)}
+              className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
+            >
+              {hintOpen ? 'Hide hint' : 'Show hint'}
+            </button>
+          )}
           <button
             type="button"
             onClick={onExit}
@@ -142,6 +175,12 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
 
       {phase === 'typing' && (
         <>
+          {typingMode === 'challenge' && hintOpen && (
+            <div className="mx-auto mb-4 max-w-3xl rounded-lg border border-border-tertiary bg-background-secondary p-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-content-tertiary">Hint</p>
+              <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-content-secondary">{challengePrompt}</pre>
+            </div>
+          )}
           <TypingInput
             key={`${exercise.id}:${restartKey}:${typingMode}`}
             code={exercise.code}
