@@ -21,21 +21,6 @@ interface TypingPageProps {
 type Phase = 'typing' | 'results' | 'quiz' | 'breakdown';
 type TypingMode = 'guided' | 'challenge';
 
-function buildChallengePrompt(code: string): string {
-  const lines = code.split('\n');
-  return lines
-    .map((line) => {
-      const indent = line.match(/^\s*/)?.[0] ?? '';
-      const trimmed = line.trim();
-      if (!trimmed) return '';
-      if (/^(def|class)\s/.test(trimmed)) return `${indent}${trimmed}`;
-      if (/^(if|elif|else|for|while|try|except|finally|with)\b/.test(trimmed)) return `${indent}${trimmed}`;
-      if (/^(import|from)\s/.test(trimmed)) return `${indent}${trimmed}`;
-      if (trimmed.startsWith('@')) return `${indent}${trimmed}`;
-      return `${indent}...`;
-    })
-    .join('\n');
-}
 
 /**
  * Drives a single exercise: type → results → quiz → breakdown. Progress is
