@@ -35,10 +35,14 @@ export default {
         DEFAULT: '0.5px',
         '0.5': '0.5px',
       },
-      // Corners: 8px (controls) and 12px (cards) only.
+      // Corners: 8px (controls), 12px (cards), full (pills).
       borderRadius: {
         md: '8px',
         lg: '12px',
+        full: '9999px',
+      },
+      opacity: {
+        8: '0.08',
       },
     },
   },

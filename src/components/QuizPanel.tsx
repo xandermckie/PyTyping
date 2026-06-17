@@ -5,20 +5,11 @@ import type { QuizQuestion, QuizScore } from '../types/exercise';
 interface QuizPanelProps {
   exerciseId: string;
   questions: QuizQuestion[];
-  /** Fired after the final question, with the user's score. */
   onComplete: (score: QuizScore) => void;
 }
 
-/**
- * Post-exercise knowledge check. One question at a time. Selecting an option
- * immediately locks the question and reveals correctness + explanation; the
- * correct answer is highlighted green, a wrong pick red. Fully keyboard driven:
- * arrow keys move between options (roving tabindex), Enter/Space selects, and
- * Enter again advances.
- */
 export default function QuizPanel({ exerciseId, questions, onComplete }: QuizPanelProps) {
   const [index, setIndex] = useState(0);
-  // One slot per question: the chosen option index, or null if unanswered.
   const [selections, setSelections] = useState<Array<number | null>>(() =>
     questions.map(() => null),
   );
@@ -38,7 +29,7 @@ export default function QuizPanel({ exerciseId, questions, onComplete }: QuizPan
 
   const select = useCallback(
     (optionIndex: number) => {
-      if (selections[index] !== null) return; // locked after first answer
+      if (selections[index] !== null) return;
       setSelections((prev) => {
         const next = [...prev];
         next[index] = optionIndex;
@@ -57,12 +48,10 @@ export default function QuizPanel({ exerciseId, questions, onComplete }: QuizPan
     setFocusedOption(0);
   }, [correctCount, isLast, onComplete, questions.length]);
 
-  // Move DOM focus to whichever option is "roving-focused".
   useEffect(() => {
     if (!answered) optionRefs.current[focusedOption]?.focus();
   }, [focusedOption, answered, index]);
 
-  // Once answered, surface the advance button to the keyboard.
   useEffect(() => {
     if (answered) advanceRef.current?.focus();
   }, [answered]);
@@ -106,72 +95,91 @@ export default function QuizPanel({ exerciseId, questions, onComplete }: QuizPan
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      {/* Progress */}
-      <div className="mb-2 flex items-center justify-between text-sm text-content-secondary">
-        <span>
+      {/* Progress header */}
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-medium uppercase tracking-wider text-content-tertiary">
           Question {index + 1} of {questions.length}
         </span>
-        <span>{exerciseId}</span>
+        <span className="text-xs text-content-tertiary">{exerciseId}</span>
       </div>
-      <div className="mb-8 h-[3px] w-full overflow-hidden rounded-md bg-background-tertiary">
-        <div className="h-full bg-accent transition-[width]" style={{ width: `${progressPct}%` }} />
+      <div className="mb-8 h-[2px] w-full overflow-hidden rounded-full bg-background-tertiary">
+        <div
+          className="h-full bg-accent transition-[width] duration-300 ease-out"
+          style={{ width: `${progressPct}%` }}
+        />
       </div>
 
-      <h2 className="mb-6 text-lg font-medium leading-snug text-content-primary">
+      {/* Question */}
+      <h2 className="mb-7 text-lg font-semibold leading-snug text-content-primary">
         {question.question}
       </h2>
 
-      <div role="radiogroup" aria-label="Answer options" onKeyDown={onKeyDown} className="flex flex-col gap-3">
+      {/* Options */}
+      <div role="radiogroup" aria-label="Answer options" onKeyDown={onKeyDown} className="flex flex-col gap-2.5">
         {question.options.map((option, i) => {
           const isCorrect = i === question.correctIndex;
           const isChosen = selected === i;
 
-          // Visual state only appears after the question is answered.
-          let cls = 'border-border-tertiary hover:bg-background-secondary';
+          let cls = 'border-border-tertiary hover:border-border-secondary hover:bg-background-secondary';
           if (answered) {
-            if (isCorrect) cls = 'border-success bg-[color-mix(in_srgb,var(--color-success)_12%,transparent)]';
-            else if (isChosen) cls = 'border-error bg-[color-mix(in_srgb,var(--color-error)_12%,transparent)]';
-            else cls = 'border-border-tertiary opacity-60';
+            if (isCorrect)
+              cls = 'border-success/50 bg-success/8 text-success';
+            else if (isChosen)
+              cls = 'border-error/50 bg-error/8 text-error';
+            else
+              cls = 'border-border-tertiary opacity-50';
           }
 
           return (
             <button
               key={i}
-              ref={(el) => {
-                optionRefs.current[i] = el;
-              }}
+              ref={(el) => { optionRefs.current[i] = el; }}
               type="button"
               role="radio"
               aria-checked={isChosen}
               disabled={answered}
               tabIndex={!answered && i === focusedOption ? 0 : -1}
               onClick={() => select(i)}
-              className={`flex items-center justify-between rounded-md border px-4 py-3 text-left text-sm text-content-primary transition-colors disabled:cursor-default ${cls}`}
+              className={`group flex items-center justify-between rounded-lg border px-4 py-3.5 text-left text-sm text-content-primary transition-all duration-100 disabled:cursor-default ${cls}`}
             >
-              <span className="font-mono">{option}</span>
-              {answered && isCorrect && <span className="ml-3 text-success">✓</span>}
-              {answered && isChosen && !isCorrect && <span className="ml-3 text-error">✗</span>}
+              <span className="font-mono leading-relaxed">{option}</span>
+              {answered && isCorrect && (
+                <span className="ml-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                    <path d="M2 5L4 7L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              )}
+              {answered && isChosen && !isCorrect && (
+                <span className="ml-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-error/15 text-error">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                    <path d="M3 3L7 7M7 3L3 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </span>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Explanation + advance, revealed after answering. */}
+      {/* Explanation + advance */}
       <div aria-live="polite" className="mt-6">
         {answered && (
           <>
-            <p className="text-sm italic text-content-secondary">{question.explanation}</p>
-            <div className="mt-6 flex items-center gap-4">
+            <p className="rounded-lg border border-border-tertiary bg-background-secondary px-4 py-3.5 text-sm leading-relaxed text-content-secondary italic">
+              {question.explanation}
+            </p>
+            <div className="mt-5 flex items-center gap-4">
               <button
                 ref={advanceRef}
                 type="button"
                 onClick={advance}
-                className="rounded-md border border-accent px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-background-secondary"
+                className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               >
                 {isLast ? 'See results →' : 'Next question →'}
               </button>
-              <span className="text-sm text-content-tertiary">
-                {correctCount} correct so far
+              <span className="text-xs text-content-tertiary">
+                {correctCount} / {index + 1} correct so far
               </span>
             </div>
           </>

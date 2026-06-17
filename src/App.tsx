@@ -104,16 +104,16 @@ function AppShell() {
   return (
     <div className="flex min-h-full flex-col">
       <header
-        className={`sticky top-0 z-30 border-b border-border-tertiary bg-background-primary/90 backdrop-blur transition-opacity duration-300 ${
+        className={`sticky top-0 z-30 border-b border-border-tertiary bg-background-primary/95 backdrop-blur-md transition-opacity duration-300 ${
           chromeHidden ? 'pointer-events-none opacity-0' : 'opacity-100'
         }`}
       >
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-6">
           <button type="button" onClick={goHome} className="rounded-md focus-visible:outline-none" aria-label="PyTyping home">
-            <Logo size={26} />
+            <Logo size={24} />
           </button>
-          <div className="flex items-center gap-1">
-            <nav className="flex gap-1" aria-label="Primary">
+          <div className="flex items-center gap-0.5">
+            <nav className="flex gap-0.5" aria-label="Primary">
               {NAV.map((item) => {
                 const active = view === item.id;
                 return (
@@ -122,8 +122,10 @@ function AppShell() {
                     type="button"
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setView(item.id)}
-                    className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                      active ? 'text-accent' : 'text-content-secondary hover:bg-background-secondary'
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      active
+                        ? 'text-accent'
+                        : 'text-content-secondary hover:bg-background-secondary hover:text-content-primary'
                     }`}
                   >
                     {item.label}
@@ -131,7 +133,7 @@ function AppShell() {
                 );
               })}
             </nav>
-            <div className="ml-1 border-l border-border-tertiary pl-1">
+            <div className="ml-2 border-l border-border-tertiary pl-2">
               <AccountMenu onShowLogin={() => setView('login')} onManage={() => setView('settings')} />
             </div>
           </div>

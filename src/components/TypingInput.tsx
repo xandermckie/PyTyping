@@ -371,8 +371,8 @@ export default function TypingInput({
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      {/* Progress bar — functional feedback, always live. */}
-      <div className="mb-6 h-[3px] w-full overflow-hidden rounded-md bg-background-tertiary">
+      {/* Progress bar */}
+      <div className="mb-6 h-[2px] w-full overflow-hidden rounded-full bg-background-tertiary">
         <div
           className="h-full bg-accent transition-[width] duration-75"
           style={{ width: `${progressPct}%` }}
@@ -388,8 +388,8 @@ export default function TypingInput({
       <div className="relative" onMouseDown={focusInput}>
         <div
           aria-hidden="true"
-          className={`rounded-lg border border-border-tertiary bg-background-secondary p-6 font-mono leading-[1.6] transition-opacity ${
-            focused || done ? 'opacity-100' : 'opacity-60'
+          className={`rounded-lg border border-border-tertiary bg-background-secondary p-6 font-mono leading-[1.75] transition-opacity shadow-[var(--shadow-sm)] ${
+            focused || done ? 'opacity-100' : 'opacity-55'
           }`}
           style={{ fontSize: 'var(--font-code-size)' }}
         >
@@ -467,22 +467,26 @@ export default function TypingInput({
         ))}
       </div>
 
-      {/* Live stats. Accuracy is primary; WPM (optional) + errors secondary. */}
-      <div className="mt-6 flex items-baseline gap-8 text-sm text-content-secondary">
-        <div>
-          <span className="text-lg font-medium text-content-primary">{display.accuracy}%</span>{' '}
-          accuracy
+      {/* Live stats */}
+      <div className="mt-5 flex items-center gap-6 text-sm">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xl font-semibold tabular-nums text-content-primary">{display.accuracy}%</span>
+          <span className="text-xs text-content-tertiary">acc</span>
         </div>
         {settings.liveWpm && (
-          <div>
-            <span className="font-medium text-content-primary">{display.wpm}</span> wpm
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl font-semibold tabular-nums text-content-primary">{display.wpm}</span>
+            <span className="text-xs text-content-tertiary">wpm</span>
           </div>
         )}
-        <div>
-          <span className="font-medium text-content-primary">{display.errors}</span> errors
+        <div className="flex items-baseline gap-1.5">
+          <span className={`text-xl font-semibold tabular-nums ${display.errors > 0 ? 'text-error' : 'text-content-primary'}`}>
+            {display.errors}
+          </span>
+          <span className="text-xs text-content-tertiary">err</span>
         </div>
-        <div className="ml-auto hidden text-content-tertiary sm:block">
-          esc - menu · tab = {settings.tabSize} spaces
+        <div className="ml-auto hidden text-xs text-content-tertiary sm:block">
+          esc · menu &nbsp;·&nbsp; tab = {settings.tabSize} sp
         </div>
       </div>
 

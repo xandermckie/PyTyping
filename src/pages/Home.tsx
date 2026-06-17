@@ -13,11 +13,6 @@ interface HomeProps {
 
 type DifficultyFilter = Difficulty | 'all';
 
-/**
- * Landing page + exercise browser. A spacious hero, then filter chips for
- * difficulty and topic, then a responsive grid of exercise cards. Completion
- * marks come from saved progress.
- */
 export default function Home({ onSelectExercise }: HomeProps) {
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all');
   const [topic, setTopic] = useState<string>('all');
@@ -26,13 +21,12 @@ export default function Home({ onSelectExercise }: HomeProps) {
   const topics = useMemo(() => allTopics(), []);
   const progress = useMemo(() => getProgress(scopeId), [scopeId, progressVersion]);
   const history = useMemo(() => getHistory(scopeId), [scopeId, progressVersion]);
-  // Re-read when the active session changes or progress is recorded.
   const completedIds = useMemo(() => new Set(Object.keys(progress)), [progress]);
   const reviewQueue = useMemo(() => getReviewQueue(EXERCISES, progress, history), [progress, history]);
   const streak = useMemo(() => getStreakSummary(progress), [progress]);
   const goal = useMemo(() => getGoalSummary(progress), [progress]);
   const achievements = useMemo(() => getAchievements(progress, history), [progress, history]);
-  const unlockedAchievements = achievements.filter((achievement) => achievement.unlocked).length;
+  const unlockedAchievements = achievements.filter((a) => a.unlocked).length;
 
   const filtered = useMemo(
     () =>
@@ -45,58 +39,70 @@ export default function Home({ onSelectExercise }: HomeProps) {
   );
 
   const chip = (active: boolean) =>
-    `rounded-md border px-3 py-1.5 text-sm transition-colors ${
+    `rounded-md border px-3 py-1.5 text-xs font-medium transition-all duration-100 ${
       active
-        ? 'border-accent text-accent'
-        : 'border-border-tertiary text-content-secondary hover:bg-background-secondary'
+        ? 'border-accent bg-[var(--color-accent-subtle)] text-accent'
+        : 'border-border-tertiary text-content-secondary hover:border-border-secondary hover:bg-background-secondary'
     }`;
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <header className="py-10 sm:py-16">
-        <Logo size={40} wordmark={false} className="mb-5 text-content-primary" />
-        <h1 className="text-2xl font-medium text-content-primary sm:text-3xl">
+      {/* Hero */}
+      <header className="py-12 sm:py-20">
+        <Logo size={36} wordmark={false} className="mb-6 text-content-primary" />
+        <h1 className="text-3xl font-semibold tracking-tight text-content-primary sm:text-4xl">
           Learn Python by typing it.
         </h1>
-        <p className="mt-3 max-w-xl text-content-secondary">
-          Type real Python snippets character by character with instant feedback, then check your
-          understanding with a short quiz and a plain-language breakdown.
+        <p className="mt-4 max-w-lg text-base leading-relaxed text-content-secondary">
+          Type real Python snippets character by character with instant feedback, then deepen your
+          understanding with a quiz and plain-language breakdown.
         </p>
-        <p className="mt-4 text-sm text-content-tertiary">
-          {EXERCISES.length} exercises · {topics.length} topics · type{' '}
-          <kbd className="rounded border border-border-tertiary bg-background-secondary px-1.5 py-0.5 font-mono text-xs">
-            ctrl/⌘ + k
-          </kbd>{' '}
-          for the command line
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2 text-xs">
-          <span className="rounded-md border border-border-tertiary bg-background-secondary px-2 py-1 text-content-secondary">
-            Streak: <span className="text-content-primary">{streak.current} days</span>
+
+        {/* Meta row */}
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-content-tertiary">
+          <span>{EXERCISES.length} exercises</span>
+          <span aria-hidden="true" className="text-border-secondary">·</span>
+          <span>{topics.length} topics</span>
+          <span aria-hidden="true" className="text-border-secondary">·</span>
+          <span>
+            press{' '}
+            <kbd className="rounded border border-border-tertiary bg-background-secondary px-1.5 py-0.5 font-mono text-content-secondary">
+              ctrl/⌘ + k
+            </kbd>{' '}
+            for commands
           </span>
-          <span className="rounded-md border border-border-tertiary bg-background-secondary px-2 py-1 text-content-secondary">
-            Daily goal: <span className="text-content-primary">{goal.completedToday}</span>/{goal.dailyGoal}
-          </span>
-          <span className="rounded-md border border-border-tertiary bg-background-secondary px-2 py-1 text-content-secondary">
-            Achievements: <span className="text-content-primary">{unlockedAchievements}</span>/{achievements.length}
-          </span>
+        </div>
+
+        {/* Stat pills */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          <StatPill label="Streak" value={`${streak.current}d`} />
+          <StatPill label="Today" value={`${goal.completedToday} / ${goal.dailyGoal}`} />
+          <StatPill
+            label="Achievements"
+            value={`${unlockedAchievements} / ${achievements.length}`}
+            highlight={unlockedAchievements > 0}
+          />
         </div>
       </header>
 
+      {/* Review queue */}
       {reviewQueue.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-content-secondary">Review due</h2>
+        <section className="mb-10">
+          <SectionLabel>Due for review</SectionLabel>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {reviewQueue.map((item) => (
               <button
                 key={item.exercise.id}
                 type="button"
                 onClick={() => onSelectExercise(item.exercise.id)}
-                className="rounded-lg border border-border-tertiary bg-background-secondary p-4 text-left transition-colors hover:bg-background-tertiary"
+                className="group rounded-lg border border-border-tertiary bg-background-secondary p-4 text-left transition-all hover:border-accent/40 hover:bg-background-tertiary"
               >
-                <div className="text-sm font-medium text-content-primary">{item.exercise.title}</div>
+                <div className="text-sm font-semibold text-content-primary group-hover:text-accent transition-colors">
+                  {item.exercise.title}
+                </div>
                 <p className="mt-1 text-xs text-content-tertiary">{item.reason}</p>
-                <p className="mt-2 text-xs text-accent">
-                  {item.dueInDays === 0 ? 'Due now' : `Due in ${item.dueInDays} day${item.dueInDays === 1 ? '' : 's'}`}
+                <p className="mt-2 text-xs font-medium text-accent">
+                  {item.dueInDays === 0 ? 'Due now' : `Due in ${item.dueInDays}d`}
                 </p>
               </button>
             ))}
@@ -104,24 +110,27 @@ export default function Home({ onSelectExercise }: HomeProps) {
         </section>
       )}
 
-      {/* Difficulty filter */}
+      {/* Filters */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-sm text-content-tertiary">Difficulty</span>
+        <span className="mr-1 text-xs font-medium uppercase tracking-widest text-content-tertiary">
+          Difficulty
+        </span>
         <button type="button" className={chip(difficulty === 'all')} onClick={() => setDifficulty('all')}>
-          all
+          All
         </button>
         {DIFFICULTIES.map((d) => (
           <button key={d} type="button" className={chip(difficulty === d)} onClick={() => setDifficulty(d)}>
-            {d}
+            {d.charAt(0).toUpperCase() + d.slice(1)}
           </button>
         ))}
       </div>
 
-      {/* Topic filter */}
-      <div className="mb-8 flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-sm text-content-tertiary">Topic</span>
+      <div className="mb-10 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-xs font-medium uppercase tracking-widest text-content-tertiary">
+          Topic
+        </span>
         <button type="button" className={chip(topic === 'all')} onClick={() => setTopic('all')}>
-          all
+          All
         </button>
         {topics.map((t) => (
           <button key={t} type="button" className={chip(topic === t)} onClick={() => setTopic(t)}>
@@ -130,12 +139,13 @@ export default function Home({ onSelectExercise }: HomeProps) {
         ))}
       </div>
 
+      {/* Exercise grid */}
       {filtered.length === 0 ? (
-        <p className="py-12 text-center text-sm text-content-secondary">
+        <p className="py-16 text-center text-sm text-content-secondary">
           No exercises match those filters yet.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 pb-12 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 pb-16 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((ex) => (
             <ExerciseCard
               key={ex.id}
@@ -147,5 +157,38 @@ export default function Home({ onSelectExercise }: HomeProps) {
         </div>
       )}
     </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-content-tertiary">
+      {children}
+    </h2>
+  );
+}
+
+function StatPill({
+  label,
+  value,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
+        highlight
+          ? 'border-accent/30 bg-[var(--color-accent-subtle)] text-accent'
+          : 'border-border-tertiary bg-background-secondary text-content-secondary'
+      }`}
+    >
+      <span className="text-content-tertiary">{label}</span>
+      <span className={`font-semibold ${highlight ? 'text-accent' : 'text-content-primary'}`}>
+        {value}
+      </span>
+    </span>
   );
 }
