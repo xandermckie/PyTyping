@@ -81,14 +81,10 @@ body {
   margin: 0;
   font-family: var(--font-ui);
   font-weight: 400;
-  font-size: 15px;
-  line-height: 1.6;
   background: var(--color-background-primary);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
 }
 
 code,
