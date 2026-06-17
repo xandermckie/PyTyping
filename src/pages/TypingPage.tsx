@@ -61,7 +61,6 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
       .map(getExerciseById)
       .filter((e): e is NonNullable<typeof e> => Boolean(e));
   }, [exercise]);
-  const challengePrompt = useMemo(() => (exercise ? buildChallengePrompt(exercise.code) : ''), [exercise]);
   const recommendedExerciseId = useMemo(() => {
     if (!exercise) return null;
     return getRecommendedExerciseId(exercise.id, related, EXERCISES, getProgress(scopeId), getHistory(scopeId));
