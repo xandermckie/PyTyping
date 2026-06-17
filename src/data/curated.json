@@ -329,5 +329,762 @@
         "explanation": "wrapper closes over func, keeping access to it after the enclosing timer call has finished."
       }
     ]
+  },
+  {
+    "id": "py-dict-comp-001",
+    "title": "Dict Comprehension",
+    "description": "Build a dictionary mapping keys to values from an iterable in one expression.",
+    "difficulty": "intermediate",
+    "topics": ["dict-comprehension", "dictionaries", "loops"],
+    "sourceUrl": "https://docs.python.org/3/tutorial/datastructures.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 2,
+    "code": "words = [\"apple\", \"banana\", \"cherry\"]\nlengths = {word: len(word) for word in words}\nprint(lengths)",
+    "explanation": {
+      "overview": "A dict comprehension builds a dictionary by evaluating key and value expressions for each item in an iterable. It is the concise alternative to creating an empty dict and assigning in a loop.",
+      "keyTerms": [
+        { "term": "dict comprehension", "definition": "The {key: value for item in iterable} syntax that constructs a dictionary in one line." },
+        { "term": "key-value pair", "definition": "Each entry in a dict maps a unique key to a value." },
+        { "term": "len()", "definition": "Returns the number of items in a sequence such as a string or list." }
+      ],
+      "howItWorks": "1. words holds three strings.\n2. For each word, the comprehension evaluates word as the key and len(word) as the value.\n3. The result is {\"apple\": 5, \"banana\": 6, \"cherry\": 6}.",
+      "designPattern": "Comprehension over manual loop: use dict comprehensions when transforming an iterable into a lookup table.",
+      "relatedExercises": ["py-comp-squares-001", "py-set-comp-001"]
+    },
+    "quiz": [
+      {
+        "question": "What type does this comprehension produce?",
+        "options": ["A list", "A tuple", "A dictionary", "A set"],
+        "correctIndex": 2,
+        "explanation": "Curly braces with key: value pairs create a dict."
+      },
+      {
+        "question": "What is the value for key \"apple\"?",
+        "options": ["4", "5", "6", "apple"],
+        "correctIndex": 1,
+        "explanation": "len(\"apple\") is 5."
+      },
+      {
+        "question": "Dict comprehensions are best for…",
+        "options": [
+          "Sorting keys in place",
+          "Building a new dict from an iterable",
+          "Deleting keys",
+          "Printing each item"
+        ],
+        "correctIndex": 1,
+        "explanation": "They construct a new mapping from an existing iterable."
+      }
+    ]
+  },
+  {
+    "id": "py-set-comp-001",
+    "title": "Set Comprehension",
+    "description": "Collect unique transformed values into a set using comprehension syntax.",
+    "difficulty": "intermediate",
+    "topics": ["set-comprehension", "sets", "loops"],
+    "sourceUrl": "https://docs.python.org/3/tutorial/datastructures.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 2,
+    "code": "numbers = [1, 2, 2, 3, 3, 3]\nunique_squares = {n ** 2 for n in numbers}\nprint(unique_squares)",
+    "explanation": {
+      "overview": "A set comprehension looks like a list comprehension but uses curly braces without colons. Sets automatically discard duplicates, so repeated inputs produce only one entry per unique result.",
+      "keyTerms": [
+        { "term": "set", "definition": "An unordered collection of unique hashable items." },
+        { "term": "set comprehension", "definition": "The {expression for item in iterable} syntax that builds a set." },
+        { "term": "uniqueness", "definition": "Adding a duplicate value to a set has no effect; only one copy is kept." }
+      ],
+      "howItWorks": "1. numbers contains duplicates.\n2. Each n is squared: 1, 4, 9.\n3. The set keeps unique values only, so the output is {1, 4, 9} regardless of how many times each n appeared.",
+      "designPattern": "Use set comprehensions when you need unique transformed values without an explicit uniqueness check.",
+      "relatedExercises": ["py-dict-comp-001", "py-comp-squares-001"]
+    },
+    "quiz": [
+      {
+        "question": "How many elements are in unique_squares?",
+        "options": ["3", "4", "5", "6"],
+        "correctIndex": 0,
+        "explanation": "Squares of 1, 2, and 3 are unique: {1, 4, 9}."
+      },
+      {
+        "question": "Why are duplicates from numbers not preserved?",
+        "options": [
+          "Sets store only unique values",
+          "Comprehensions always sort values",
+          "n ** 2 removes duplicates",
+          "print() deduplicates"
+        ],
+        "correctIndex": 0,
+        "explanation": "A set cannot contain duplicate elements."
+      },
+      {
+        "question": "Set comprehension syntax uses…",
+        "options": ["Square brackets", "Curly braces without colons", "Parentheses", "Angle brackets"],
+        "correctIndex": 1,
+        "explanation": "{expr for x in iterable} builds a set; dict comprehensions need key: value."
+      }
+    ]
+  },
+  {
+    "id": "py-enum-zip-001",
+    "title": "Enumerate and Zip",
+    "description": "Pair parallel lists with zip and attach indexes with enumerate.",
+    "difficulty": "intermediate",
+    "topics": ["enumerate", "zip", "loops"],
+    "sourceUrl": "https://docs.python.org/3/library/functions.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 2,
+    "code": "names = [\"Ada\", \"Grace\", \"Alan\"]\nscores = [95, 88, 91]\nfor index, (name, score) in enumerate(zip(names, scores), start=1):\n    print(f\"{index}. {name}: {score}\")",
+    "explanation": {
+      "overview": "zip walks two iterables in parallel, yielding tuples of paired items. enumerate adds a running index. Together they replace manual index counters when printing ranked rows.",
+      "keyTerms": [
+        { "term": "zip", "definition": "Aggregates elements from multiple iterables into tuples, stopping at the shortest." },
+        { "term": "enumerate", "definition": "Wraps an iterable to yield (index, item) pairs; start= changes the first index." },
+        { "term": "tuple unpacking", "definition": "(name, score) in the loop splits each zipped pair into separate names." }
+      ],
+      "howItWorks": "1. zip(names, scores) yields (\"Ada\", 95), (\"Grace\", 88), (\"Alan\", 91).\n2. enumerate(..., start=1) prefixes 1, 2, 3.\n3. Each iteration prints a numbered line with name and score.",
+      "designPattern": "Prefer zip + enumerate over manual range(len(...)) indexing when iterating aligned sequences.",
+      "relatedExercises": ["py-comp-squares-001", "py-class-basic-001"]
+    },
+    "quiz": [
+      {
+        "question": "What does zip(names, scores) produce?",
+        "options": [
+          "A single merged list",
+          "Tuples pairing items from each list",
+          "Only the longer list",
+          "A dictionary"
+        ],
+        "correctIndex": 1,
+        "explanation": "zip pairs corresponding elements into tuples."
+      },
+      {
+        "question": "With start=1, what index is printed for Ada?",
+        "options": ["0", "1", "2", "95"],
+        "correctIndex": 1,
+        "explanation": "enumerate with start=1 begins counting at 1."
+      },
+      {
+        "question": "If scores had one extra element, zip would…",
+        "options": [
+          "Pad names with None",
+          "Stop at the shorter iterable",
+          "Raise an error",
+          "Repeat names"
+        ],
+        "correctIndex": 1,
+        "explanation": "zip stops when the shortest input is exhausted."
+      }
+    ]
+  },
+  {
+    "id": "py-ctx-with-001",
+    "title": "Context Manager with open",
+    "description": "Read a file safely using a with block so it closes automatically.",
+    "difficulty": "intermediate",
+    "topics": ["context-managers", "files", "with"],
+    "sourceUrl": "https://docs.python.org/3/tutorial/inputoutput.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 2,
+    "code": "path = \"notes.txt\"\nwith open(path, \"r\", encoding=\"utf-8\") as handle:\n    text = handle.read()\nprint(len(text))",
+    "explanation": {
+      "overview": "The with statement enters a context manager that guarantees cleanup. For files, that means the handle is closed even if an error occurs inside the block.",
+      "keyTerms": [
+        { "term": "context manager", "definition": "An object supporting __enter__ and __exit__; open() returns one for files." },
+        { "term": "with statement", "definition": "Runs a block under manager control, calling cleanup on exit." },
+        { "term": "encoding", "definition": "Specifies how bytes on disk map to Unicode text; utf-8 is the usual choice." }
+      ],
+      "howItWorks": "1. open(...) returns a file object bound to handle.\n2. Inside the block, read() loads the entire file into text.\n3. Leaving the block closes the file automatically before len(text) runs.",
+      "designPattern": "Always use with open(...) instead of manual open/close to avoid leaked file handles.",
+      "relatedExercises": ["py-try-except-001", "py-ctx-custom-001"]
+    },
+    "quiz": [
+      {
+        "question": "What happens to the file when the with block ends?",
+        "options": [
+          "It stays open until garbage collection",
+          "It is closed automatically",
+          "It is deleted",
+          "It is flushed only on success"
+        ],
+        "correctIndex": 1,
+        "explanation": "The context manager's __exit__ closes the file."
+      },
+      {
+        "question": "What does handle.read() return?",
+        "options": ["A list of lines", "The full file contents as a string", "A byte count", "None"],
+        "correctIndex": 1,
+        "explanation": "read() with no size reads the entire file into one str."
+      },
+      {
+        "question": "Why pass encoding=\"utf-8\"?",
+        "options": [
+          "To compress the file",
+          "To decode text bytes correctly on all platforms",
+          "To encrypt the file",
+          "To open in binary mode"
+        ],
+        "correctIndex": 1,
+        "explanation": "Explicit encoding avoids platform-default surprises when reading text."
+      }
+    ]
+  },
+  {
+    "id": "py-class-basic-001",
+    "title": "A Simple Class",
+    "description": "Define a class with __init__ to store state on each instance.",
+    "difficulty": "intermediate",
+    "topics": ["classes", "oop", "__init__"],
+    "sourceUrl": "https://docs.python.org/3/tutorial/classes.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 3,
+    "code": "class Point:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def distance_from_origin(self):\n        return (self.x ** 2 + self.y ** 2) ** 0.5\n\np = Point(3, 4)\nprint(p.distance_from_origin())",
+    "explanation": {
+      "overview": "A class bundles data and behavior. __init__ runs when an instance is created, attaching attributes to self. Methods take self as the first parameter to access instance state.",
+      "keyTerms": [
+        { "term": "class", "definition": "A blueprint for creating objects with shared methods and attribute names." },
+        { "term": "__init__", "definition": "The initializer method; self refers to the new instance being set up." },
+        { "term": "instance method", "definition": "A function defined on a class that receives the instance as self." }
+      ],
+      "howItWorks": "1. Point(3, 4) creates an instance and calls __init__, setting self.x and self.y.\n2. distance_from_origin uses the Pythagorean theorem.\n3. For (3, 4) the distance is 5.0.",
+      "designPattern": "Model nouns as classes when data and operations naturally belong together.",
+      "relatedExercises": ["py-property-001", "py-dataclass-001"]
+    },
+    "quiz": [
+      {
+        "question": "What does self represent in __init__?",
+        "options": ["The class itself", "The new instance being initialized", "A global variable", "The parent class"],
+        "correctIndex": 1,
+        "explanation": "self is the individual object whose attributes are being set."
+      },
+      {
+        "question": "What does Point(3, 4).distance_from_origin() return?",
+        "options": ["7", "5.0", "25", "3.4"],
+        "correctIndex": 1,
+        "explanation": "sqrt(3**2 + 4**2) = 5.0."
+      },
+      {
+        "question": "Why is self listed as the first parameter?",
+        "options": [
+          "Python passes the instance automatically",
+          "It is optional and ignored",
+          "It names the class",
+          "It imports the module"
+        ],
+        "correctIndex": 0,
+        "explanation": "When you call p.distance_from_origin(), Python passes p as self."
+      }
+    ]
+  },
+  {
+    "id": "py-args-kwargs-001",
+    "title": "Args and Kwargs",
+    "description": "Forward any number of positional and keyword arguments through a wrapper.",
+    "difficulty": "intermediate",
+    "topics": ["functions", "args", "kwargs"],
+    "sourceUrl": "https://docs.python.org/3/tutorial/controlflow.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 2,
+    "code": "def announce(title, *args, **kwargs):\n    print(title)\n    for value in args:\n        print(\" -\", value)\n    for key, value in kwargs.items():\n        print(f\" {key}={value}\")\n\nannounce(\"Shopping\", \"milk\", \"eggs\", store=\"downtown\", urgent=True)",
+    "explanation": {
+      "overview": "*args collects extra positional arguments into a tuple; **kwargs collects extra keyword arguments into a dict. Together they let one function accept flexible call signatures.",
+      "keyTerms": [
+        { "term": "*args", "definition": "Captures surplus positional parameters as a tuple." },
+        { "term": "**kwargs", "definition": "Captures surplus keyword parameters as a dictionary." },
+        { "term": "parameter forwarding", "definition": "Passing *args and **kwargs along to another function unchanged." }
+      ],
+      "howItWorks": "1. title receives \"Shopping\".\n2. args becomes (\"milk\", \"eggs\").\n3. kwargs becomes {\"store\": \"downtown\", \"urgent\": True}.\n4. The loops print each piece in order.",
+      "designPattern": "Use *args/**kwargs in decorators and adapters that must wrap arbitrary functions.",
+      "relatedExercises": ["py-deco-timer-001", "py-func-factorial-001"]
+    },
+    "quiz": [
+      {
+        "question": "What type is args inside announce?",
+        "options": ["list", "tuple", "dict", "set"],
+        "correctIndex": 1,
+        "explanation": "*args bundles extra positional values into a tuple."
+      },
+      {
+        "question": "How many positional extras are in the sample call?",
+        "options": ["0", "1", "2", "3"],
+        "correctIndex": 2,
+        "explanation": "\"milk\" and \"eggs\" are the two extras after title."
+      },
+      {
+        "question": "kwargs.items() yields…",
+        "options": [
+          "Only keys",
+          "Key-value pairs",
+          "Sorted values",
+          "Indexes"
+        ],
+        "correctIndex": 1,
+        "explanation": "items() iterates (key, value) tuples from the dict."
+      }
+    ]
+  },
+  {
+    "id": "py-try-except-001",
+    "title": "Try and Except",
+    "description": "Handle invalid input gracefully instead of crashing.",
+    "difficulty": "intermediate",
+    "topics": ["exceptions", "error-handling", "functions"],
+    "sourceUrl": "https://docs.python.org/3/tutorial/errors.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 2,
+    "code": "def safe_divide(a, b):\n    try:\n        return a / b\n    except ZeroDivisionError:\n        return None\n\nprint(safe_divide(10, 2))\nprint(safe_divide(10, 0))",
+    "explanation": {
+      "overview": "try runs code that might fail; except catches specific exception types so you can recover or return a sentinel value. Here division by zero returns None instead of raising.",
+      "keyTerms": [
+        { "term": "exception", "definition": "An error signaled at runtime, such as ZeroDivisionError." },
+        { "term": "try/except", "definition": "Control flow that attempts risky code and handles named failures." },
+        { "term": "ZeroDivisionError", "definition": "Raised when dividing or modulo-ing by zero." }
+      ],
+      "howItWorks": "1. safe_divide(10, 2) completes normally and returns 5.0.\n2. safe_divide(10, 0) triggers ZeroDivisionError inside try.\n3. The except block runs and returns None.",
+      "designPattern": "Catch specific exceptions you can handle; avoid bare except that hides bugs.",
+      "relatedExercises": ["py-ctx-with-001", "py-func-factorial-001"]
+    },
+    "quiz": [
+      {
+        "question": "What does safe_divide(10, 0) return?",
+        "options": ["0", "None", "Infinity", "It raises uncaught"],
+        "correctIndex": 1,
+        "explanation": "ZeroDivisionError is caught and None is returned."
+      },
+      {
+        "question": "When is the except block executed?",
+        "options": [
+          "Always",
+          "Only when ZeroDivisionError occurs",
+          "Only when a / b is negative",
+          "Never"
+        ],
+        "correctIndex": 1,
+        "explanation": "except targets a specific exception type."
+      },
+      {
+        "question": "What is printed for safe_divide(10, 2)?",
+        "options": ["5", "5.0", "None", "2"],
+        "correctIndex": 1,
+        "explanation": "10 / 2 evaluates to 5.0 in Python 3."
+      }
+    ]
+  },
+  {
+    "id": "py-property-001",
+    "title": "Property Getter",
+    "description": "Expose a computed attribute with @property instead of a method call.",
+    "difficulty": "intermediate",
+    "topics": ["property", "classes", "decorators"],
+    "sourceUrl": "https://docs.python.org/3/library/functions.html#property",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 2,
+    "code": "class Rectangle:\n    def __init__(self, width, height):\n        self.width = width\n        self.height = height\n\n    @property\n    def area(self):\n        return self.width * self.height\n\nrect = Rectangle(4, 5)\nprint(rect.area)",
+    "explanation": {
+      "overview": "@property turns a zero-argument method into an attribute-style accessor. Callers read rect.area without parentheses while the value is still computed on demand.",
+      "keyTerms": [
+        { "term": "@property", "definition": "Decorator that makes a method accessible like an attribute." },
+        { "term": "computed attribute", "definition": "A value derived from other state rather than stored independently." },
+        { "term": "descriptor", "definition": "The protocol behind property, binding get/set behavior to attribute access." }
+      ],
+      "howItWorks": "1. Rectangle stores width and height.\n2. Accessing rect.area calls the area method behind the scenes.\n3. It returns 4 * 5 = 20 without storing a separate field.",
+      "designPattern": "Use @property for derived values so the public API stays simple while logic stays in one place.",
+      "relatedExercises": ["py-class-basic-001", "py-deco-timer-001"]
+    },
+    "quiz": [
+      {
+        "question": "How do you read the area?",
+        "options": ["rect.area()", "rect.area", "Rectangle.area(rect)", "rect.get_area"],
+        "correctIndex": 1,
+        "explanation": "@property allows attribute syntax without parentheses."
+      },
+      {
+        "question": "What is printed?",
+        "options": ["9", "20", "45", "None"],
+        "correctIndex": 1,
+        "explanation": "4 * 5 = 20."
+      },
+      {
+        "question": "@property is useful when…",
+        "options": [
+          "You need a value computed from other attributes",
+          "You want to delete an attribute",
+          "You need multiple inheritance",
+          "You want a static method"
+        ],
+        "correctIndex": 0,
+        "explanation": "It exposes derived data with clean attribute access."
+      }
+    ]
+  },
+  {
+    "id": "py-filter-comp-001",
+    "title": "Filtered Comprehension",
+    "description": "Build a list including only items that pass an if condition.",
+    "difficulty": "intermediate",
+    "topics": ["list-comprehension", "filtering", "conditionals"],
+    "sourceUrl": "https://realpython.com/list-comprehension-python/",
+    "sourceLabel": "Real Python",
+    "estimatedTime": 2,
+    "code": "numbers = range(1, 21)\nevens = [n for n in numbers if n % 2 == 0]\nprint(evens)",
+    "explanation": {
+      "overview": "Adding an if clause at the end of a list comprehension filters items before they are collected. Here only even numbers are kept.",
+      "keyTerms": [
+        { "term": "filter clause", "definition": "The trailing if in a comprehension that skips items failing the test." },
+        { "term": "modulo test", "definition": "n % 2 == 0 identifies even integers." },
+        { "term": "range", "definition": "Produces integers from start up to but not including stop." }
+      ],
+      "howItWorks": "1. range(1, 21) yields 1 through 20.\n2. Only numbers where n % 2 == 0 are kept.\n3. The result is [2, 4, 6, 8, 10, 12, 14, 16, 18, 20].",
+      "designPattern": "Filter-and-transform in one comprehension when both steps apply to the same iterable.",
+      "relatedExercises": ["py-comp-squares-001", "py-dict-comp-001"]
+    },
+    "quiz": [
+      {
+        "question": "How many elements are in evens?",
+        "options": ["9", "10", "11", "20"],
+        "correctIndex": 1,
+        "explanation": "Half of 1..20 are even: ten numbers."
+      },
+      {
+        "question": "Where does the if clause appear?",
+        "options": [
+          "Before the for",
+          "After the for iterable",
+          "Inside print()",
+          "Before the variable name"
+        ],
+        "correctIndex": 1,
+        "explanation": "Syntax is [expr for item in iterable if condition]."
+      },
+      {
+        "question": "Is 1 included in evens?",
+        "options": ["Yes", "No"],
+        "correctIndex": 1,
+        "explanation": "1 is odd, so it fails n % 2 == 0."
+      }
+    ]
+  },
+  {
+    "id": "py-defaultdict-001",
+    "title": "Grouping with setdefault",
+    "description": "Group items into lists inside a dictionary without defaultdict.",
+    "difficulty": "intermediate",
+    "topics": ["dictionaries", "grouping", "loops"],
+    "sourceUrl": "https://docs.python.org/3/tutorial/datastructures.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 3,
+    "code": "words = [\"cat\", \"car\", \"bat\", \"bar\"]\ngroups = {}\nfor word in words:\n    key = word[0]\n    groups.setdefault(key, []).append(word)\nprint(groups)",
+    "explanation": {
+      "overview": "setdefault returns an existing value or inserts a default when the key is missing. Appending to the returned list groups words by their first letter in one pass.",
+      "keyTerms": [
+        { "term": "setdefault", "definition": "dict method: get key or set key to default and return it." },
+        { "term": "grouping", "definition": "Organizing items into buckets keyed by some attribute." },
+        { "term": "mutable default", "definition": "Here [] is created once per new key, not shared across all keys." }
+      ],
+      "howItWorks": "1. Each word's first character becomes the key.\n2. setdefault ensures groups[key] is a list, then append adds the word.\n3. Result maps 'c' to [\"cat\", \"car\"] and 'b' to [\"bat\", \"bar\"].",
+      "designPattern": "Use setdefault or defaultdict when building grouped collections in a single loop.",
+      "relatedExercises": ["py-dict-comp-001", "py-enum-zip-001"]
+    },
+    "quiz": [
+      {
+        "question": "What key holds \"bat\"?",
+        "options": ["\"bat\"", "\"b\"", "0", "1"],
+        "correctIndex": 1,
+        "explanation": "key = word[0], the first character."
+      },
+      {
+        "question": "setdefault(key, []) when key exists…",
+        "options": [
+          "Replaces the list with a new empty list",
+          "Returns the existing value without changing it",
+          "Deletes the key",
+          "Raises KeyError"
+        ],
+        "correctIndex": 1,
+        "explanation": "If the key is present, the current value is returned unchanged."
+      },
+      {
+        "question": "How many keys are in groups?",
+        "options": ["2", "3", "4", "5"],
+        "correctIndex": 0,
+        "explanation": "Only 'c' and 'b' appear as first letters."
+      }
+    ]
+  },
+  {
+    "id": "py-deco-stack-001",
+    "title": "Stacked Decorators",
+    "description": "Apply multiple decorators to one function; they wrap from bottom to top.",
+    "difficulty": "advanced",
+    "topics": ["decorators", "functions", "closures"],
+    "sourceUrl": "https://realpython.com/primer-on-python-decorators/",
+    "sourceLabel": "Real Python",
+    "estimatedTime": 4,
+    "code": "def bold(func):\n    def wrapper():\n        return f\"<b>{func()}</b>\"\n    return wrapper\n\ndef italic(func):\n    def wrapper():\n        return f\"<i>{func()}</i>\"\n    return wrapper\n\n@bold\n@italic\ndef greet():\n    return \"hello\"\n\nprint(greet())",
+    "explanation": {
+      "overview": "Multiple decorators apply bottom-up: @bold above @italic means greet = bold(italic(greet)). The inner decorator runs first, then the outer wraps that result.",
+      "keyTerms": [
+        { "term": "decorator stacking", "definition": "Several @ lines above a function nest wrappers outward." },
+        { "term": "application order", "definition": "The decorator closest to def runs first." },
+        { "term": "wrapper nesting", "definition": "Each wrapper calls the next inner callable." }
+      ],
+      "howItWorks": "1. italic wraps greet to return <i>hello</i>.\n2. bold wraps that to add <b> outside: <b><i>hello</i></b>.\n3. greet() now returns the doubly wrapped string.",
+      "designPattern": "Order decorators deliberately when each adds a layer of behavior; document which runs first.",
+      "relatedExercises": ["py-deco-timer-001", "py-lru-cache-001"]
+    },
+    "quiz": [
+      {
+        "question": "Which decorator is applied first?",
+        "options": ["bold", "italic", "print", "greet"],
+        "correctIndex": 1,
+        "explanation": "The decorator immediately above def is applied first."
+      },
+      {
+        "question": "What does greet() return?",
+        "options": ["hello", "<i>hello</i>", "<b>hello</b>", "<b><i>hello</i></b>"],
+        "correctIndex": 3,
+        "explanation": "italic wraps first, then bold wraps the italic result."
+      },
+      {
+        "question": "@bold @italic def f is equivalent to…",
+        "options": ["f = bold(italic(f))", "f = italic(bold(f))", "f = bold(f) + italic(f)", "f = italic(f) only"],
+        "correctIndex": 0,
+        "explanation": "Decorators apply bottom-up, nesting inward first."
+      }
+    ]
+  },
+  {
+    "id": "py-dataclass-001",
+    "title": "Dataclass Record",
+    "description": "Use @dataclass to generate __init__, __repr__, and comparison boilerplate.",
+    "difficulty": "advanced",
+    "topics": ["dataclasses", "classes", "typing"],
+    "sourceUrl": "https://docs.python.org/3/library/dataclasses.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 3,
+    "code": "from dataclasses import dataclass\n\n@dataclass\nclass User:\n    name: str\n    active: bool = True\n\nuser = User(\"Ada\")\nprint(user.name, user.active)",
+    "explanation": {
+      "overview": "@dataclass auto-generates an initializer and readable repr from annotated fields. Default values follow the same rules as normal class attributes.",
+      "keyTerms": [
+        { "term": "@dataclass", "definition": "Decorator that synthesizes common special methods from field declarations." },
+        { "term": "type annotation", "definition": "Fields like name: str document expected types and drive codegen." },
+        { "term": "default field", "definition": "active: bool = True is optional when constructing User." }
+      ],
+      "howItWorks": "1. User(\"Ada\") sets name to \"Ada\" and leaves active at its default True.\n2. print reads both attributes directly.\n3. No manual __init__ is written; dataclass generated it.",
+      "designPattern": "Prefer dataclasses for plain data containers instead of hand-written boilerplate.",
+      "relatedExercises": ["py-class-basic-001", "py-typehints-001"]
+    },
+    "quiz": [
+      {
+        "question": "What is user.active after User(\"Ada\")?",
+        "options": ["False", "True", "None", "\"Ada\""],
+        "correctIndex": 1,
+        "explanation": "active defaults to True when omitted."
+      },
+      {
+        "question": "@dataclass primarily reduces…",
+        "options": ["Runtime memory", "Boilerplate methods", "Import time", "Syntax errors in loops"],
+        "correctIndex": 1,
+        "explanation": "It auto-generates __init__, __repr__, and more."
+      },
+      {
+        "question": "Which import is required?",
+        "options": ["from typing import dataclass", "from dataclasses import dataclass", "import dataclass", "from classes import dataclass"],
+        "correctIndex": 1,
+        "explanation": "dataclass lives in the standard library dataclasses module."
+      }
+    ]
+  },
+  {
+    "id": "py-async-intro-001",
+    "title": "Async Await Basics",
+    "description": "Define a coroutine with async def and pause with await on asyncio.sleep.",
+    "difficulty": "advanced",
+    "topics": ["async", "await", "asyncio"],
+    "sourceUrl": "https://docs.python.org/3/library/asyncio.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 3,
+    "code": "import asyncio\n\nasync def fetch_label():\n    await asyncio.sleep(0.1)\n    return \"ready\"\n\nasync def main():\n    label = await fetch_label()\n    print(label)\n\nasyncio.run(main())",
+    "explanation": {
+      "overview": "async def defines a coroutine function. await yields control while waiting for another coroutine, letting the event loop run other tasks. asyncio.run starts the top-level coroutine.",
+      "keyTerms": [
+        { "term": "coroutine", "definition": "A function declared with async def; calling it returns a coroutine object to be awaited." },
+        { "term": "await", "definition": "Pauses the current coroutine until the awaited operation completes." },
+        { "term": "asyncio.run", "definition": "Entry point that drives the event loop until main() finishes." }
+      ],
+      "howItWorks": "1. asyncio.run(main()) schedules main.\n2. main awaits fetch_label(), which sleeps briefly then returns \"ready\".\n3. print outputs ready when the coroutine chain completes.",
+      "designPattern": "Use async/await for I/O-bound concurrency; it does not make CPU-bound code parallel by itself.",
+      "relatedExercises": ["py-deco-timer-001", "py-ctx-custom-001"]
+    },
+    "quiz": [
+      {
+        "question": "What keyword defines fetch_label?",
+        "options": ["def", "async def", "await def", "coroutine"],
+        "correctIndex": 1,
+        "explanation": "async def creates a coroutine function."
+      },
+      {
+        "question": "What does await asyncio.sleep(0.1) do?",
+        "options": [
+          "Blocks the entire OS thread busy-waiting",
+          "Pauses the coroutine without blocking other tasks",
+          "Returns immediately always",
+          "Raises SleepError"
+        ],
+        "correctIndex": 1,
+        "explanation": "await hands control to the event loop during the sleep."
+      },
+      {
+        "question": "How is the program started?",
+        "options": ["fetch_label()", "main()", "asyncio.run(main())", "await main() at module level"],
+        "correctIndex": 2,
+        "explanation": "asyncio.run drives the top-level coroutine."
+      }
+    ]
+  },
+  {
+    "id": "py-typehints-001",
+    "title": "Type Hints on Functions",
+    "description": "Annotate parameters and return types for clearer function contracts.",
+    "difficulty": "advanced",
+    "topics": ["typing", "functions", "annotations"],
+    "sourceUrl": "https://docs.python.org/3/library/typing.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 2,
+    "code": "from typing import List\n\ndef total_lengths(words: List[str]) -> int:\n    return sum(len(word) for word in words)\n\nprint(total_lengths([\"hi\", \"python\"]))",
+    "explanation": {
+      "overview": "Type hints document expected types for tools and readers. They are not enforced at runtime by default but help static checkers catch mistakes before execution.",
+      "keyTerms": [
+        { "term": "type hint", "definition": "Annotation like words: List[str] describing intended types." },
+        { "term": "return annotation", "definition": "The -> int after parameters states the expected return type." },
+        { "term": "List[str]", "definition": "A homogeneous list whose elements are strings." }
+      ],
+      "howItWorks": "1. total_lengths receives a list of strings.\n2. The generator expression sums len(word) for each.\n3. \"hi\" (2) + \"python\" (6) prints 8.",
+      "designPattern": "Annotate public function signatures; keep hints simple and accurate for maintainability.",
+      "relatedExercises": ["py-dataclass-001", "py-func-factorial-001"]
+    },
+    "quiz": [
+      {
+        "question": "What does total_lengths return for the sample input?",
+        "options": ["2", "6", "8", "\"hipython\""],
+        "correctIndex": 2,
+        "explanation": "len(\"hi\") + len(\"python\") = 2 + 6 = 8."
+      },
+      {
+        "question": "Type hints at runtime…",
+        "options": [
+          "Are enforced by Python and raise TypeError",
+          "Are stored but not enforced by default",
+          "Are ignored and stripped from bytecode",
+          "Replace docstrings"
+        ],
+        "correctIndex": 1,
+        "explanation": "Annotations are available via __annotations__ but not checked unless you use a tool."
+      },
+      {
+        "question": "List[str] means…",
+        "options": ["A list of integers", "A list of strings", "A string of lists", "Any list"],
+        "correctIndex": 1,
+        "explanation": "The parameter inside [] is the element type."
+      }
+    ]
+  },
+  {
+    "id": "py-lru-cache-001",
+    "title": "LRU Cache Decorator",
+    "description": "Memoize expensive function results with functools.lru_cache.",
+    "difficulty": "advanced",
+    "topics": ["decorators", "caching", "functools"],
+    "sourceUrl": "https://docs.python.org/3/library/functools.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 3,
+    "code": "from functools import lru_cache\n\n@lru_cache(maxsize=128)\ndef fib(n: int) -> int:\n    if n < 2:\n        return n\n    return fib(n - 1) + fib(n - 2)\n\nprint(fib(10))",
+    "explanation": {
+      "overview": "lru_cache stores return values keyed by arguments so repeated calls reuse prior results. For recursive fib it collapses exponential time to linear by remembering subproblems.",
+      "keyTerms": [
+        { "term": "memoization", "definition": "Caching function outputs keyed by inputs to avoid redundant work." },
+        { "term": "lru_cache", "definition": "Least-recently-used cache decorator from functools." },
+        { "term": "maxsize", "definition": "Caps how many distinct argument tuples are stored before evicting old entries." }
+      ],
+      "howItWorks": "1. fib(10) recurses as usual but each fib(k) is stored after the first compute.\n2. Later calls with the same n read from cache.\n3. fib(10) returns 55 quickly compared to uncached recursion.",
+      "designPattern": "Apply lru_cache to pure functions with expensive recomputation and hashable arguments.",
+      "relatedExercises": ["py-deco-timer-001", "py-func-factorial-001"]
+    },
+    "quiz": [
+      {
+        "question": "What does fib(10) return?",
+        "options": ["34", "55", "89", "10"],
+        "correctIndex": 1,
+        "explanation": "The 10th Fibonacci number (0-indexed style here) is 55."
+      },
+      {
+        "question": "lru_cache helps most when…",
+        "options": [
+          "The same arguments repeat",
+          "The function has side effects",
+          "Arguments are unhashable dicts",
+          "maxsize is zero"
+        ],
+        "correctIndex": 0,
+        "explanation": "Cache hits require hashable arguments and repeated calls."
+      },
+      {
+        "question": "maxsize=128 means…",
+        "options": [
+          "At most 128 cached results",
+          "The function runs 128 times total",
+          "Arguments must be under 128 characters",
+          "Cache never evicts"
+        ],
+        "correctIndex": 0,
+        "explanation": "When full, least recently used entries are dropped."
+      }
+    ]
+  },
+  {
+    "id": "py-ctx-custom-001",
+    "title": "Custom Context Manager",
+    "description": "Implement __enter__ and __exit__ to run setup and teardown around a block.",
+    "difficulty": "advanced",
+    "topics": ["context-managers", "classes", "with"],
+    "sourceUrl": "https://docs.python.org/3/reference/datamodel.html",
+    "sourceLabel": "Python Docs",
+    "estimatedTime": 4,
+    "code": "class TimerBlock:\n    def __enter__(self):\n        self.start = 0.0\n        return self\n\n    def __exit__(self, exc_type, exc, tb):\n        return False\n\nwith TimerBlock() as block:\n    block.start = 1.0\nprint(block.start)",
+    "explanation": {
+      "overview": "Objects with __enter__ and __exit__ can be used in with statements. __enter__ runs at block entry; __exit__ runs on normal exit or exception. Returning False from __exit__ propagates any exception.",
+      "keyTerms": [
+        { "term": "__enter__", "definition": "Called when entering a with block; its return value binds to the as target." },
+        { "term": "__exit__", "definition": "Called when leaving the block; receives exception info if one occurred." },
+        { "term": "as binding", "definition": "with TimerBlock() as block assigns __enter__'s return value to block." }
+      ],
+      "howItWorks": "1. TimerBlock().__enter__ returns self, bound to block.\n2. Inside the block, block.start is set to 1.0.\n3. __exit__ runs on leave; block remains accessible afterward in this simple example.",
+      "designPattern": "Implement context managers for resource setup/teardown or scoped state changes.",
+      "relatedExercises": ["py-ctx-with-001", "py-class-basic-001"]
+    },
+    "quiz": [
+      {
+        "question": "Which methods enable the with statement?",
+        "options": ["__init__ and __del__", "__enter__ and __exit__", "__call__ and __str__", "__get__ and __set__"],
+        "correctIndex": 1,
+        "explanation": "The context manager protocol uses __enter__ and __exit__."
+      },
+      {
+        "question": "What does __exit__ returning False mean?",
+        "options": [
+          "Suppress any exception",
+          "Propagate exceptions normally",
+          "Skip teardown",
+          "Close the interpreter"
+        ],
+        "correctIndex": 1,
+        "explanation": "False (or None) means do not suppress the exception."
+      },
+      {
+        "question": "What value is printed?",
+        "options": ["0.0", "1.0", "None", "TimerBlock"],
+        "correctIndex": 1,
+        "explanation": "block.start was set to 1.0 inside the with block."
+      }
+    ]
   }
 ]

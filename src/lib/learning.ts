@@ -37,12 +37,6 @@ function toDayKey(dateIso: string): string {
   return dateIso.slice(0, 10);
 }
 
-function daysBetween(aIso: string, b: Date): number {
-  const a = new Date(`${toDayKey(aIso)}T00:00:00`);
-  const bDay = new Date(`${b.toISOString().slice(0, 10)}T00:00:00`);
-  return Math.floor((bDay.getTime() - a.getTime()) / (24 * 60 * 60 * 1000));
-}
-
 function dayCounts(progress: ProgressMap): DayInfo[] {
   const counts = new Map<string, number>();
   for (const rec of Object.values(progress)) {
@@ -54,12 +48,6 @@ function dayCounts(progress: ProgressMap): DayInfo[] {
     .sort((a, b) => a.key.localeCompare(b.key));
 }
 
-function latestAttemptAt(record: CompletionRecord, history: HistoryMap): string {
-  const attempts = history[record.exerciseId];
-  if (!attempts || attempts.length === 0) return record.completedAt;
-  return attempts[attempts.length - 1].at;
-}
-
 function quizPct(record: Pick<CompletionRecord, 'quizCorrect' | 'quizTotal'>): number {
   if (record.quizTotal <= 0) return 0;
   return (record.quizCorrect / record.quizTotal) * 100;
@@ -68,8 +56,8 @@ function quizPct(record: Pick<CompletionRecord, 'quizCorrect' | 'quizTotal'>): n
 export function getReviewQueue(
   exercises: Exercise[],
   progress: ProgressMap,
-  history: HistoryMap,
-  now: Date = new Date(),
+  _history: HistoryMap,
+  _now: Date = new Date(),
 ): ReviewItem[] {
   const byId = new Map(exercises.map((exercise) => [exercise.id, exercise]));
   const items: ReviewItem[] = [];
@@ -78,22 +66,23 @@ export function getReviewQueue(
     const exercise = byId.get(record.exerciseId);
     if (!exercise) continue;
 
-    const accuracyPenalty = Math.max(0, (88 - record.accuracy) * 1.2);
-    const quizPenalty = Math.max(0, (80 - quizPct(record)) * 1.1);
-    const errorPenalty = Math.min(record.errors * 1.5, 25);
-    const ageDays = daysBetween(latestAttemptAt(record, history), now);
-    const ageBoost = Math.min(Math.max(ageDays, 0) * 4, 48);
-    const score = Math.round(accuracyPenalty + quizPenalty + errorPenalty + ageBoost);
-    const dueInDays = Math.max(0, 3 - ageDays);
+    const quiz = quizPct(record);
+    const needsAccuracyReview = record.accuracy < 75;
+    const needsQuizReview = record.quizTotal > 0 && quiz < 75;
+    if (!needsAccuracyReview && !needsQuizReview) continue;
 
-    let reason = 'Refresh before this gets rusty';
-    if (record.accuracy < 88) reason = `Accuracy was ${record.accuracy}% last time`;
-    else if (quizPct(record) < 80) reason = `Quiz score was ${Math.round(quizPct(record))}%`;
-    else if (ageDays >= 7) reason = `Last practiced ${ageDays} days ago`;
-
-    if (score >= 25 || ageDays >= 3) {
-      items.push({ exercise, score, reason, dueInDays });
+    let reason: string;
+    if (needsAccuracyReview) {
+      reason = `Accuracy was ${record.accuracy}% last time`;
+    } else {
+      reason = `Quiz score was ${Math.round(quiz)}%`;
     }
+
+    const score = needsAccuracyReview
+      ? 100 - record.accuracy
+      : 100 - Math.round(quiz);
+
+    items.push({ exercise, score, reason, dueInDays: 0 });
   }
 
   return items.sort((a, b) => b.score - a.score).slice(0, 8);

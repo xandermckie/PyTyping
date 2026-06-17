@@ -4,6 +4,7 @@ import { SessionProvider, useSession } from './context/SessionContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import TypingPage from './pages/TypingPage';
+import PythonGuide from './pages/PythonGuide';
 import Settings from './components/Settings';
 import ProgressTracker from './components/ProgressTracker';
 import AccountMenu from './components/AccountMenu';
@@ -16,10 +17,11 @@ import type { Command } from './components/CommandPalette';
 import { EXERCISES } from './lib/exercises';
 import { THEME_OPTIONS } from './lib/theme';
 
-type View = 'home' | 'typing' | 'settings' | 'progress' | 'login' | 'about';
+type View = 'home' | 'typing' | 'settings' | 'progress' | 'login' | 'about' | 'guide';
 
 const NAV: Array<{ id: Exclude<View, 'typing' | 'login' | 'about'>; label: string }> = [
   { id: 'home', label: 'Exercises' },
+  { id: 'guide', label: 'Guide' },
   { id: 'progress', label: 'Progress' },
   { id: 'settings', label: 'Settings' },
 ];
@@ -67,6 +69,7 @@ function AppShell() {
     }));
     const cmds: Command[] = [
       { id: 'nav-home', label: 'Go to Exercises', hint: 'navigate', run: () => setView('home') },
+      { id: 'nav-guide', label: 'Go to Python guide', hint: 'navigate', run: () => setView('guide') },
       { id: 'nav-progress', label: 'Go to Progress', hint: 'navigate', run: () => setView('progress') },
       { id: 'nav-settings', label: 'Go to Settings', hint: 'navigate', run: () => setView('settings') },
       { id: 'nav-about', label: 'About & legal', hint: 'navigate', run: () => setView('about') },
@@ -137,6 +140,7 @@ function AppShell() {
 
       <main className="flex-1 px-4 py-8 sm:px-6">
         {view === 'home' && <Home onSelectExercise={startExercise} />}
+        {view === 'guide' && <PythonGuide />}
         {view === 'typing' && activeId && (
           <TypingPage
             key={activeId}

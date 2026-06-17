@@ -1,0 +1,112 @@
+[
+  {
+    "id": "getting-started",
+    "title": "Getting started",
+    "summary": "Python is a readable language often used for scripting, data work, and web backends. You run code line by line or save it in a .py file.",
+    "bullets": [
+      "Indentation (spaces) defines blocks instead of curly braces.",
+      "The interactive REPL lets you try one line at a time; scripts run many lines from a file.",
+      "Comments start with # and are ignored by Python."
+    ],
+    "examples": [
+      "# Your first line\nprint(\"Hello, Python!\")"
+    ]
+  },
+  {
+    "id": "variables-types",
+    "title": "Variables and types",
+    "summary": "Names point to values. Common built-in types include integers, floats, strings, and booleans.",
+    "bullets": [
+      "Use = to bind a name to a value: age = 21",
+      "int holds whole numbers; float holds decimals.",
+      "str holds text in quotes; bool is True or False.",
+      "type(x) shows what kind of value x is."
+    ],
+    "examples": [
+      "name = \"Ada\"\nscore = 98.5\nactive = True\nprint(name, score, active)"
+    ]
+  },
+  {
+    "id": "operators",
+    "title": "Operators",
+    "summary": "Arithmetic and comparison operators behave like math class, with a few Python-specific extras.",
+    "bullets": [
+      "+ - * / perform basic math; // is integer division.",
+      "% gives the remainder (modulo).",
+      "== != < > <= >= compare values and return True or False.",
+      "and, or, not combine boolean conditions."
+    ],
+    "examples": [
+      "print(17 % 5)\nprint(3 ** 2)\nprint(10 > 4 and 2 < 5)"
+    ]
+  },
+  {
+    "id": "control-flow",
+    "title": "Control flow",
+    "summary": "if/elif/else pick branches; for and while repeat work until a condition changes.",
+    "bullets": [
+      "if condition: runs a block when condition is True.",
+      "elif adds more tests; else runs when nothing matched.",
+      "for item in iterable: visits each item.",
+      "while condition: keeps looping while condition stays True.",
+      "break exits a loop early; continue skips to the next iteration."
+    ],
+    "examples": [
+      "for n in range(3):\n    if n % 2 == 0:\n        print(n, \"even\")\n    else:\n        print(n, \"odd\")"
+    ]
+  },
+  {
+    "id": "data-structures",
+    "title": "Data structures",
+    "summary": "Lists, dicts, tuples, and sets organize multiple values in different ways.",
+    "bullets": [
+      "list: ordered, mutable sequence — items = [1, 2, 3]",
+      "dict: key → value mapping — user = {\"name\": \"Ada\"}",
+      "tuple: ordered, immutable sequence — point = (3, 4)",
+      "set: unordered collection of unique values — tags = {\"py\", \"dev\"}",
+      "Index lists and strings with [0]; dict values with [\"key\"]."
+    ],
+    "examples": [
+      "scores = [90, 85, 88]\nscores.append(92)\nlookup = {\"a\": 1, \"b\": 2}\nprint(scores[0], lookup[\"a\"])"
+    ]
+  },
+  {
+    "id": "functions",
+    "title": "Functions",
+    "summary": "def groups reusable steps. Parameters receive arguments; return sends a value back.",
+    "bullets": [
+      "def name(params): introduces a function.",
+      "Call it with name(arg1, arg2).",
+      "return exits and optionally provides a result.",
+      "Local variables inside a function do not leak out unless returned."
+    ],
+    "examples": [
+      "def greet(name):\n    return f\"Hello, {name}!\"\n\nmessage = greet(\"world\")\nprint(message)"
+    ]
+  },
+  {
+    "id": "useful-patterns",
+    "title": "Useful patterns",
+    "summary": "These idioms appear constantly in real Python code and in PyTyping exercises.",
+    "bullets": [
+      "List comprehensions build lists in one line: [x * 2 for x in nums]",
+      "enumerate(iterable) gives (index, item) pairs in loops.",
+      "with open(path) as f: safely opens files and closes them automatically.",
+      "class Name: defines a type with data (attributes) and behavior (methods)."
+    ],
+    "examples": [
+      "squares = [n ** 2 for n in range(5)]\nfor i, value in enumerate(squares):\n    print(i, value)"
+    ]
+  },
+  {
+    "id": "next-steps",
+    "title": "Next steps",
+    "summary": "When you are ready, switch to the Exercises tab and type real snippets. Use this guide anytime you forget a concept.",
+    "bullets": [
+      "Start with beginner exercises if Python is new.",
+      "Read each exercise breakdown after typing to connect syntax to meaning.",
+      "Official docs go deeper on every topic listed here."
+    ],
+    "examples": []
+  }
+]

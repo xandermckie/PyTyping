@@ -3,6 +3,7 @@ import type { KeyboardEvent, MouseEvent } from 'react';
 import { tokenizeToCells } from '../lib/highlight';
 import type { CharCell } from '../lib/highlight';
 import { playErrorBlip } from '../lib/sound';
+import { computeAccuracy, applyTabToCounters, undoCorrectKeystroke } from '../lib/typing-stats';
 import { useSettings } from '../context/SettingsContext';
 import type { TypingStats } from '../types/exercise';
 
@@ -175,10 +176,9 @@ export default function TypingInput({
     const seconds = s.startedAt ? (end - s.startedAt) / 1000 : 0;
     const minutes = seconds / 60;
     const wpm = minutes > 0 ? s.correct / 5 / minutes : 0;
-    const accuracy = s.keystrokes > 0 ? (s.correct / s.keystrokes) * 100 : 100;
     return {
       wpm: Math.max(0, Math.round(wpm)),
-      accuracy: Math.round(accuracy),
+      accuracy: computeAccuracy(s.correct, s.keystrokes),
       errors: s.errors,
       progress: total > 0 ? cursorRef.current / total : 0,
       seconds: Math.round(seconds * 10) / 10,
@@ -229,14 +229,12 @@ export default function TypingInput({
     while (consumed < cfgRef.current.tabSize && cells[i + consumed]?.char === ' ') consumed += 1;
     const stats = statsRef.current;
     if (stats.startedAt === 0) stats.startedAt = performance.now();
-    stats.keystrokes += 1;
+    applyTabToCounters(stats, consumed);
     if (consumed > 0) {
-      stats.correct += consumed;
       cursorRef.current = i + consumed;
       errorRef.current = -1;
       if (cursorRef.current === total) finishRef.current();
     } else {
-      stats.errors += 1;
       errorRef.current = i;
       if (cfgRef.current.sound) playErrorBlip();
     }
@@ -252,7 +250,8 @@ export default function TypingInput({
     if (errorRef.current !== -1) {
       errorRef.current = -1; // first clear an outstanding mistake
     } else if (cursorRef.current > 0) {
-      cursorRef.current -= 1; // then step back over a correct character
+      cursorRef.current -= 1;
+      undoCorrectKeystroke(statsRef.current);
     }
   }, []);
 

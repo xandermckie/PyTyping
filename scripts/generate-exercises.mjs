@@ -454,6 +454,7 @@ builders.push(() => {
       code: `numbers = ${lit}\nprint(sorted(numbers))`,
       output: pyStr(asc(L)),
       distractors: [pyStr([...asc(L)].reverse()), lit, pyStr([...L].reverse())],
+      difficulty: 'intermediate',
       overview: 'sorted() returns a new list ordered ascending; the original is untouched.',
       keyTerms: [{ term: 'sorted()', definition: 'Returns a new sorted list from any iterable.' }],
       howItWorks: `Ordering ${lit} ascending gives ${pyStr(asc(L))}.`,
@@ -863,9 +864,51 @@ builders.push(() => {
   return out;
 });
 
+// --- Advanced templates --------------------------------------------------
+builders.push(() => {
+  const out = [];
+  out.push(make({
+    cat: 'adv-lru', concept: 'decorators', topics: ['decorators', 'caching'],
+    difficulty: 'advanced',
+    title: 'Cached square',
+    description: 'Memoize squares with lru_cache.',
+    code: 'from functools import lru_cache\n\n@lru_cache(maxsize=32)\ndef square(n):\n    return n * n\n\nprint(square(12))',
+    output: '144',
+    distractors: ['12', '24', '132'],
+    overview: 'lru_cache stores results keyed by arguments so repeated calls are instant.',
+    keyTerms: [{ term: 'lru_cache', definition: 'Decorator that caches function return values.' }],
+    howItWorks: 'square(12) computes once and returns 144; later calls with 12 hit the cache.',
+  }));
+  out.push(make({
+    cat: 'adv-dataclass', concept: 'classes', topics: ['dataclasses', 'classes'],
+    difficulty: 'advanced',
+    title: 'Dataclass point',
+    description: 'Store x and y on a dataclass instance.',
+    code: 'from dataclasses import dataclass\n\n@dataclass\nclass Point:\n    x: int\n    y: int\n\np = Point(2, 3)\nprint(p.x + p.y)',
+    output: '5',
+    distractors: ['6', '23', '2'],
+    overview: '@dataclass generates __init__ and other boilerplate from field annotations.',
+    keyTerms: [{ term: '@dataclass', definition: 'Auto-generates common methods from declared fields.' }],
+    howItWorks: 'Point(2, 3) sets x=2 and y=3; p.x + p.y is 5.',
+  }));
+  out.push(make({
+    cat: 'adv-typing', concept: 'functions', topics: ['typing', 'functions'],
+    difficulty: 'advanced',
+    title: 'Typed add',
+    description: 'Add two integers with annotated parameters.',
+    code: 'def add(a: int, b: int) -> int:\n    return a + b\n\nprint(add(7, 8))',
+    output: '15',
+    distractors: ['78', '1', '56'],
+    overview: 'Type hints document expected parameter and return types for readers and tools.',
+    keyTerms: [{ term: 'type hint', definition: 'Annotation describing the intended type of a value.' }],
+    howItWorks: 'add(7, 8) returns 15; hints are not enforced at runtime by default.',
+  }));
+  return out;
+});
+
 /* ------------------------------- assemble --------------------------------- */
 
-const CAPS = [90, 90, 100, 90, 40, 30, 30, 30]; // per builder, sums to 500
+const CAPS = [80, 90, 100, 90, 40, 30, 30, 30, 20]; // per builder; curated fills remainder to 500
 const TARGET_TOTAL = 500;
 
 const curated = JSON.parse(readFileSync(resolve(ROOT, 'src/data/curated.json'), 'utf8'));
