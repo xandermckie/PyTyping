@@ -154,15 +154,6 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
           >
             Mode: {typingMode === 'guided' ? 'Guided' : 'Challenge'}
           </button>
-          {typingMode === 'challenge' && (
-            <button
-              type="button"
-              onClick={() => setHintOpen((o) => !o)}
-              className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
-            >
-              {hintOpen ? 'Hide hint' : 'Show hint'}
-            </button>
-          )}
           <button
             type="button"
             onClick={onExit}
@@ -175,10 +166,30 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
 
       {phase === 'typing' && (
         <>
-          {typingMode === 'challenge' && hintOpen && (
-            <div className="mx-auto mb-4 max-w-3xl rounded-lg border border-border-tertiary bg-background-secondary p-4">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-content-tertiary">Hint</p>
-              <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-content-secondary">{challengePrompt}</pre>
+          {typingMode === 'challenge' && (
+            <div className="mx-auto mb-4 max-w-3xl">
+              <button
+                type="button"
+                onClick={() => setHintOpen((o) => !o)}
+                className="mb-2 flex items-center gap-1.5 text-xs text-content-tertiary hover:text-content-secondary transition-colors"
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden="true"
+                  className={`transition-transform duration-150 ${hintOpen ? 'rotate-90' : ''}`}
+                >
+                  <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {hintOpen ? 'Hide hint' : 'Show hint'}
+              </button>
+              {hintOpen && (
+                <div className="rounded-lg border border-border-tertiary bg-background-secondary p-4">
+                  <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-content-secondary">{challengePrompt}</pre>
+                </div>
+              )}
             </div>
           )}
           <TypingInput
