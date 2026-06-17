@@ -71,24 +71,31 @@ const btnClass =
   'rounded-md border border-border-tertiary px-4 py-2 text-sm text-content-secondary transition-colors hover:bg-background-secondary';
 
 export default function Settings({ onShowLogin }: SettingsProps) {
-  const { settings, update, reset } = useSettings();
+  const { settings, update, reset, persistError } = useSettings();
   const { isGuest, account, displayName, logout, removeAccount } = useSession();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const setColor = (key: keyof BaseColors, value: string) => {
     update({ themeId: 'custom', customColors: { ...settings.customColors, [key]: value } });
   };
 
   const downloadBackup = () => {
-    const blob = new Blob([exportBackup()], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pytyping-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    setExportError(null);
+    try {
+      const blob = new Blob([exportBackup()], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pytyping-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('[PyTyping] Export failed:', err);
+      setExportError('Could not export backup. Please try again.');
+    }
   };
 
   const onImportFile = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -116,6 +123,8 @@ export default function Settings({ onShowLogin }: SettingsProps) {
   return (
     <div className="mx-auto w-full max-w-2xl pb-12">
       <h1 className="mb-8 text-lg font-medium text-content-primary">Settings</h1>
+
+      {persistError && <p className="mb-6 text-sm text-error">{persistError}</p>}
 
       {/* Account */}
       <section className="mb-8">
@@ -311,6 +320,7 @@ export default function Settings({ onShowLogin }: SettingsProps) {
           />
         </div>
         {importError && <p className="mt-3 text-sm text-error">{importError}</p>}
+        {exportError && <p className="mt-3 text-sm text-error">{exportError}</p>}
       </section>
     </div>
   );

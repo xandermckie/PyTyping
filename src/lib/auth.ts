@@ -83,18 +83,23 @@ function weakHash(password: string, saltHex: string): string {
 async function deriveHash(password: string, saltHex: string): Promise<string> {
   const subtle = typeof crypto !== 'undefined' ? crypto.subtle : undefined;
   if (!subtle) return weakHash(password, saltHex);
-  const enc = new TextEncoder();
-  // Casts to BufferSource keep us compatible with the stricter typed-array
-  // generics introduced in recent TypeScript lib versions.
-  const passwordBytes = enc.encode(password) as BufferSource;
-  const salt = hexToBytes(saltHex) as BufferSource;
-  const keyMaterial = await subtle.importKey('raw', passwordBytes, 'PBKDF2', false, ['deriveBits']);
-  const bits = await subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
-    keyMaterial,
-    256,
-  );
-  return bytesToHex(new Uint8Array(bits));
+  try {
+    const enc = new TextEncoder();
+    // Casts to BufferSource keep us compatible with the stricter typed-array
+    // generics introduced in recent TypeScript lib versions.
+    const passwordBytes = enc.encode(password) as BufferSource;
+    const salt = hexToBytes(saltHex) as BufferSource;
+    const keyMaterial = await subtle.importKey('raw', passwordBytes, 'PBKDF2', false, ['deriveBits']);
+    const bits = await subtle.deriveBits(
+      { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+      keyMaterial,
+      256,
+    );
+    return bytesToHex(new Uint8Array(bits));
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn('[PyTyping] Web Crypto failed, using fallback hash:', err);
+    return weakHash(password, saltHex);
+  }
 }
 
 /** Constant-time-ish string compare to avoid trivial timing leaks. */
@@ -155,9 +160,12 @@ export function loadAccounts(): Account[] {
   return loadValidated(ACCOUNTS_KEY, validateAccounts);
 }
 
-export function saveAccounts(accounts: Account[]): void {
-  saveJSON(ACCOUNTS_KEY, accounts);
+export function saveAccounts(accounts: Account[]): boolean {
+  return saveJSON(ACCOUNTS_KEY, accounts);
 }
+
+const STORAGE_SAVE_ERROR =
+  'Could not save to browser storage. It may be full, disabled, or in private mode.';
 
 function uid(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -184,7 +192,9 @@ export async function createAccount(rawUsername: string, password: string): Prom
     createdAt: new Date().toISOString(),
     avatarColor: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
   };
-  saveAccounts([...accounts, account]);
+  if (!saveAccounts([...accounts, account])) {
+    return { ok: false, error: STORAGE_SAVE_ERROR };
+  }
   return { ok: true, account };
 }
 
@@ -217,8 +227,8 @@ export function getSession(): Session {
   return { kind: 'guest' };
 }
 
-export function setSession(session: Session): void {
-  saveJSON(SESSION_KEY, session);
+export function setSession(session: Session): boolean {
+  return saveJSON(SESSION_KEY, session);
 }
 
 export function clearAccountsAndSession(): void {

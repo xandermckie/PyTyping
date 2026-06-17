@@ -34,6 +34,7 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
   const [previous, setPrevious] = useState<AttemptSummary | null>(null);
   // Bumped to force a fresh TypingInput when the user restarts the snippet.
   const [restartKey, setRestartKey] = useState(0);
+  const [saveWarning, setSaveWarning] = useState<string | null>(null);
 
   const related = useMemo(() => {
     if (!exercise) return [];
@@ -69,7 +70,7 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
   const handleQuizComplete = useCallback(
     (score: QuizScore) => {
       if (exercise && typingStats) {
-        recordCompletion(scopeId, {
+        const { saved } = recordCompletion(scopeId, {
           exerciseId: exercise.id,
           accuracy: typingStats.accuracy,
           wpm: typingStats.wpm,
@@ -77,7 +78,12 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
           quizCorrect: score.correct,
           quizTotal: score.total,
         });
-        notifyProgressChange();
+        if (saved) {
+          setSaveWarning(null);
+          notifyProgressChange();
+        } else {
+          setSaveWarning('Your progress could not be saved. Storage may be full or disabled.');
+        }
       }
       setPhase('breakdown');
     },
@@ -142,12 +148,19 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
       )}
 
       {phase === 'breakdown' && (
-        <BreakdownPanel
-          exercise={exercise}
-          related={related}
-          onSelectExercise={onSelectExercise}
-          onNext={onExit}
-        />
+        <>
+          {saveWarning && (
+            <p className="mx-auto mb-4 max-w-3xl rounded-md border border-error/40 bg-background-secondary px-4 py-3 text-sm text-error">
+              {saveWarning}
+            </p>
+          )}
+          <BreakdownPanel
+            exercise={exercise}
+            related={related}
+            onSelectExercise={onSelectExercise}
+            onNext={onExit}
+          />
+        </>
       )}
     </div>
   );

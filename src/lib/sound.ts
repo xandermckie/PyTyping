@@ -16,21 +16,25 @@ function getContext(): AudioContext | null {
 
 /** Play a brief, low-volume error tone. No-op if Web Audio is unavailable. */
 export function playErrorBlip(): void {
-  const audio = getContext();
-  if (!audio) return;
-  // Browsers suspend the context until a user gesture; typing is a gesture.
-  if (audio.state === 'suspended') void audio.resume();
+  try {
+    const audio = getContext();
+    if (!audio) return;
+    // Browsers suspend the context until a user gesture; typing is a gesture.
+    if (audio.state === 'suspended') void audio.resume().catch(() => {});
 
-  const now = audio.currentTime;
-  const osc = audio.createOscillator();
-  const gain = audio.createGain();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(220, now); // low A — unobtrusive
-  // Quick attack, fast decay → a soft tick rather than a beep.
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.06, now + 0.005);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-  osc.connect(gain).connect(audio.destination);
-  osc.start(now);
-  osc.stop(now + 0.13);
+    const now = audio.currentTime;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220, now); // low A — unobtrusive
+    // Quick attack, fast decay → a soft tick rather than a beep.
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.06, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(now);
+    osc.stop(now + 0.13);
+  } catch {
+    /* audio unavailable */
+  }
 }

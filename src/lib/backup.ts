@@ -92,19 +92,29 @@ export function importBackup(text: string): ImportResult {
     if (!ids.has(existing.id)) clearProgress(existing.id);
   }
 
-  saveAccounts(accounts);
-  saveJSON(SETTINGS_KEY, settings);
+  if (!saveAccounts(accounts)) {
+    return { ok: false, error: 'Could not save imported accounts. Storage may be full or disabled.' };
+  }
+  if (!saveJSON(SETTINGS_KEY, settings)) {
+    return { ok: false, error: 'Could not save imported settings. Storage may be full or disabled.' };
+  }
   for (const a of accounts) {
-    setProgress(a.id, validateProgressMap((rawProgress as Record<string, unknown>)[a.id]));
-    setHistory(a.id, validateHistoryMap((rawHistory as Record<string, unknown>)[a.id]));
+    if (!setProgress(a.id, validateProgressMap((rawProgress as Record<string, unknown>)[a.id]))) {
+      return { ok: false, error: 'Could not save imported progress. Storage may be full or disabled.' };
+    }
+    if (!setHistory(a.id, validateHistoryMap((rawHistory as Record<string, unknown>)[a.id]))) {
+      return { ok: false, error: 'Could not save imported history. Storage may be full or disabled.' };
+    }
   }
 
   // Restore session only if it points at an imported account.
   const session = parsed.session;
   if (isObject(session) && session.kind === 'account' && isString(session.accountId) && ids.has(session.accountId)) {
-    setSession({ kind: 'account', accountId: session.accountId });
-  } else {
-    setSession({ kind: 'guest' });
+    if (!setSession({ kind: 'account', accountId: session.accountId })) {
+      return { ok: false, error: 'Import succeeded but session could not be saved. Reload and log in again.' };
+    }
+  } else if (!setSession({ kind: 'guest' })) {
+    return { ok: false, error: 'Import succeeded but session could not be saved. Reload the page.' };
   }
   return { ok: true };
 }

@@ -127,8 +127,8 @@ export function getProgress(profileId: string): ProgressMap {
   return loadValidated(progressKey(profileId), validateProgressMap, pickStore(profileId));
 }
 
-export function setProgress(profileId: string, map: ProgressMap): void {
-  saveJSON(progressKey(profileId), map, pickStore(profileId));
+export function setProgress(profileId: string, map: ProgressMap): boolean {
+  return saveJSON(progressKey(profileId), map, pickStore(profileId));
 }
 
 export function clearProgress(profileId: string): void {
@@ -138,9 +138,8 @@ export function clearProgress(profileId: string): void {
 }
 
 /** Copy one scope's progress + history onto another (guest → account on signup). */
-export function copyScope(fromId: string, toId: string): void {
-  setProgress(toId, getProgress(fromId));
-  setHistory(toId, getHistory(fromId));
+export function copyScope(fromId: string, toId: string): boolean {
+  return setProgress(toId, getProgress(fromId)) && setHistory(toId, getHistory(fromId));
 }
 
 /* ----------------------------- attempt history ---------------------------- */
@@ -180,19 +179,19 @@ export function getHistory(profileId: string): HistoryMap {
   return loadValidated(historyKey(profileId), validateHistoryMap, pickStore(profileId));
 }
 
-export function setHistory(profileId: string, map: HistoryMap): void {
-  saveJSON(historyKey(profileId), map, pickStore(profileId));
+export function setHistory(profileId: string, map: HistoryMap): boolean {
+  return saveJSON(historyKey(profileId), map, pickStore(profileId));
 }
 
 export function getAttempts(profileId: string, exerciseId: string): AttemptSummary[] {
   return getHistory(profileId)[exerciseId] ?? [];
 }
 
-function appendAttempt(profileId: string, exerciseId: string, attempt: AttemptSummary): void {
+function appendAttempt(profileId: string, exerciseId: string, attempt: AttemptSummary): boolean {
   const history = getHistory(profileId);
   const list = history[exerciseId] ?? [];
   history[exerciseId] = [...list, attempt].slice(-HISTORY_CAP);
-  setHistory(profileId, history);
+  return setHistory(profileId, history);
 }
 
 /** A run is "better" if its (accuracy + quiz%) sum is higher. */
@@ -204,7 +203,7 @@ function score(r: Pick<CompletionRecord, 'accuracy' | 'quizCorrect' | 'quizTotal
 export function recordCompletion(
   profileId: string,
   entry: Omit<CompletionRecord, 'completedAt' | 'attempts'>,
-): CompletionRecord {
+): { record: CompletionRecord; saved: boolean } {
   const all = getProgress(profileId);
   const prev = all[entry.exerciseId];
   const attempts = (prev?.attempts ?? 0) + 1;
@@ -217,11 +216,11 @@ export function recordCompletion(
       : candidate;
 
   all[entry.exerciseId] = best;
-  setProgress(profileId, all);
+  const progressSaved = setProgress(profileId, all);
 
   // Always log this attempt to history so the user can track round-to-round
   // improvement, even when it wasn't their best run.
-  appendAttempt(profileId, entry.exerciseId, {
+  const historySaved = appendAttempt(profileId, entry.exerciseId, {
     wpm: entry.wpm,
     accuracy: entry.accuracy,
     errors: entry.errors,
@@ -230,7 +229,7 @@ export function recordCompletion(
     at: candidate.completedAt,
   });
 
-  return best;
+  return { record: best, saved: progressSaved && historySaved };
 }
 
 export function isCompleted(profileId: string, exerciseId: string): boolean {

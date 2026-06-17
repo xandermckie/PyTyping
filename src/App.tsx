@@ -153,6 +153,15 @@ function AppShell() {
 }
 
 export default function App() {
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const onRejection = (e: PromiseRejectionEvent) => {
+      console.error('[PyTyping] Unhandled rejection:', e.reason);
+    };
+    window.addEventListener('unhandledrejection', onRejection);
+    return () => window.removeEventListener('unhandledrejection', onRejection);
+  }, []);
+
   return (
     <ErrorBoundary>
       <SettingsProvider>

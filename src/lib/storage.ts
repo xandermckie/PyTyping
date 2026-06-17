@@ -42,13 +42,16 @@ export function loadValidated<T>(key: string, validate: (raw: unknown) => T, sto
   }
 }
 
-export function saveJSON<T>(key: string, value: T, store?: Storage): void {
+/** `false` when storage is unavailable, quota is exceeded, or serialization fails. */
+export function saveJSON<T>(key: string, value: T, store?: Storage): boolean {
   const s = resolve(store);
-  if (!s) return;
+  if (!s) return false;
   try {
     s.setItem(PREFIX + key, JSON.stringify(value));
-  } catch {
-    /* storage unavailable or full — ignore, the app still works in-memory */
+    return true;
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn('[PyTyping] saveJSON failed:', key, err);
+    return false;
   }
 }
 

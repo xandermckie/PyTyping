@@ -45,7 +45,8 @@ export default function LoginScreen({ onDone, onGuest }: LoginScreenProps) {
         mode === 'login' ? await login(username, password) : await signup(username, password, carryGuest && guestHasProgress);
       if (result.ok) onDone();
       else setError(result.error);
-    } catch {
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('[PyTyping] Auth submit failed:', err);
       setError('Something went wrong. Please try again.');
     } finally {
       setBusy(false);

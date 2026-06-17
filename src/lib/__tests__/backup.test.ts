@@ -4,7 +4,7 @@ import { importBackup } from '../backup';
 vi.mock('../storage', () => ({
   loadJSON: vi.fn(() => ({ kind: 'guest' })),
   loadValidated: vi.fn((_key: string, validate: (raw: unknown) => unknown) => validate(undefined)),
-  saveJSON: vi.fn(),
+  saveJSON: vi.fn(() => true),
   removeKey: vi.fn(),
 }));
 
@@ -15,8 +15,8 @@ vi.mock('../progress', async (importOriginal) => {
     clearProgress: vi.fn(),
     getProgress: vi.fn(() => ({})),
     getHistory: vi.fn(() => ({})),
-    setProgress: vi.fn(),
-    setHistory: vi.fn(),
+    setProgress: vi.fn(() => true),
+    setHistory: vi.fn(() => true),
   };
 });
 

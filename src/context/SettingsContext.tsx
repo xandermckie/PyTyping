@@ -19,6 +19,8 @@ interface SettingsContextValue {
   settings: Settings;
   update: (patch: Partial<Settings>) => void;
   reset: () => void;
+  /** Set when debounced settings persistence fails (quota, private mode, etc.). */
+  persistError: string | null;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -27,6 +29,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(() =>
     loadValidated(SETTINGS_KEY, validateSettings),
   );
+  const [persistError, setPersistError] = useState<string | null>(null);
 
   // Apply palette + typography + caret behavior to <html> on every change.
   useEffect(() => {
@@ -49,7 +52,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const saveTimer = useRef<number | undefined>(undefined);
   useEffect(() => {
     window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => saveJSON(SETTINGS_KEY, settings), 150);
+    saveTimer.current = window.setTimeout(() => {
+      if (saveJSON(SETTINGS_KEY, settings)) {
+        setPersistError(null);
+      } else {
+        setPersistError('Settings could not be saved. Storage may be full or disabled.');
+      }
+    }, 150);
     return () => window.clearTimeout(saveTimer.current);
   }, [settings]);
 
@@ -58,7 +67,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
   const reset = useCallback(() => setSettings({ ...DEFAULT_SETTINGS }), []);
 
-  const value = useMemo(() => ({ settings, update, reset }), [settings, update, reset]);
+  const value = useMemo(
+    () => ({ settings, update, reset, persistError }),
+    [settings, update, reset, persistError],
+  );
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 }
 

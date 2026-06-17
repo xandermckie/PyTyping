@@ -23,6 +23,7 @@ interface CommandPaletteProps {
 export default function CommandPalette({ open, commands, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
+  const [cmdError, setCmdError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Reset query/selection and focus the field each time it opens.
@@ -30,6 +31,7 @@ export default function CommandPalette({ open, commands, onClose }: CommandPalet
     if (open) {
       setQuery('');
       setActive(0);
+      setCmdError(null);
       // Focus after paint so the input exists.
       requestAnimationFrame(() => inputRef.current?.focus());
     }
@@ -48,12 +50,19 @@ export default function CommandPalette({ open, commands, onClose }: CommandPalet
 
   if (!open) return null;
 
+  const runCommand = (cmd: Command) => {
+    try {
+      cmd.run();
+      onClose();
+    } catch (err) {
+      if (import.meta.env.DEV) console.error('[PyTyping] Command failed:', cmd.id, err);
+      setCmdError('That command failed. Please try again.');
+    }
+  };
+
   const runActive = () => {
     const cmd = filtered[active];
-    if (cmd) {
-      onClose();
-      cmd.run();
-    }
+    if (cmd) runCommand(cmd);
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -101,6 +110,7 @@ export default function CommandPalette({ open, commands, onClose }: CommandPalet
           className="w-full border-b border-border-tertiary bg-transparent px-4 py-3 text-sm text-content-primary outline-none"
         />
         <ul className="max-h-72 overflow-y-auto py-1">
+          {cmdError && <li className="px-4 py-2 text-sm text-error">{cmdError}</li>}
           {filtered.length === 0 ? (
             <li className="px-4 py-3 text-sm text-content-tertiary">No matching commands</li>
           ) : (
@@ -110,10 +120,7 @@ export default function CommandPalette({ open, commands, onClose }: CommandPalet
                   type="button"
                   // Hover highlights by syncing the active index (so mouse + kbd agree).
                   onMouseMove={() => setActive(i)}
-                  onClick={() => {
-                    onClose();
-                    cmd.run();
-                  }}
+                  onClick={() => runCommand(cmd)}
                   className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
                     i === active ? 'bg-background-secondary text-content-primary' : 'text-content-secondary'
                   }`}

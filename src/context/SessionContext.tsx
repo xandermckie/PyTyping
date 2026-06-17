@@ -55,30 +55,56 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const login = useCallback(
-    async (username: string, password: string) => {
-      const result = await verifyLogin(username, password);
-      if (result.ok) {
-        persistSession({ kind: 'account', accountId: result.account.id });
-        setAccounts(loadAccounts());
-        setSessionState({ kind: 'account', accountId: result.account.id });
-        bump();
+    async (username: string, password: string): Promise<AuthResult> => {
+      try {
+        const result = await verifyLogin(username, password);
+        if (result.ok) {
+          if (!persistSession({ kind: 'account', accountId: result.account.id })) {
+            return {
+              ok: false,
+              error: 'Correct password, but session could not be saved. Check browser storage.',
+            };
+          }
+          setAccounts(loadAccounts());
+          setSessionState({ kind: 'account', accountId: result.account.id });
+          bump();
+        }
+        return result;
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('[PyTyping] Login failed:', err);
+        return { ok: false, error: 'Something went wrong during login. Please try again.' };
       }
-      return result;
     },
     [bump],
   );
 
   const signup = useCallback(
-    async (username: string, password: string, carryGuest: boolean) => {
-      const result = await createAccount(username, password);
-      if (result.ok) {
-        if (carryGuest) copyScope('guest', result.account.id);
-        persistSession({ kind: 'account', accountId: result.account.id });
-        setAccounts(loadAccounts());
-        setSessionState({ kind: 'account', accountId: result.account.id });
-        bump();
+    async (username: string, password: string, carryGuest: boolean): Promise<AuthResult> => {
+      try {
+        const result = await createAccount(username, password);
+        if (result.ok) {
+          if (carryGuest && !copyScope('guest', result.account.id)) {
+            return {
+              ok: false,
+              error:
+                'Account created but guest progress could not be copied. Storage may be full or disabled.',
+            };
+          }
+          if (!persistSession({ kind: 'account', accountId: result.account.id })) {
+            return {
+              ok: false,
+              error: 'Account created but session could not be saved. Try logging in.',
+            };
+          }
+          setAccounts(loadAccounts());
+          setSessionState({ kind: 'account', accountId: result.account.id });
+          bump();
+        }
+        return result;
+      } catch (err) {
+        if (import.meta.env.DEV) console.error('[PyTyping] Signup failed:', err);
+        return { ok: false, error: 'Something went wrong during signup. Please try again.' };
       }
-      return result;
     },
     [bump],
   );

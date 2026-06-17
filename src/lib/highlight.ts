@@ -34,8 +34,13 @@ function walk(token: string | Prism.Token, inherited: string, out: CharCell[]): 
 
 /** Tokenize Python source into a flat, per-character cell array. */
 export function tokenizeToCells(code: string): CharCell[] {
-  const tokens = Prism.tokenize(code, Prism.languages.python);
-  const cells: CharCell[] = [];
-  for (const token of tokens) walk(token, '', cells);
-  return cells;
+  try {
+    const tokens = Prism.tokenize(code, Prism.languages.python);
+    const cells: CharCell[] = [];
+    for (const token of tokens) walk(token, '', cells);
+    return cells;
+  } catch (err) {
+    if (import.meta.env.DEV) console.warn('[PyTyping] Highlight failed, using plain text:', err);
+    return [...code].map((char) => ({ char, className: '' }));
+  }
 }
