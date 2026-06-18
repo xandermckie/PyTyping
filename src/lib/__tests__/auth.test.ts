@@ -57,6 +57,20 @@ describe('validateAccounts', () => {
     expect(accounts[0].avatarColor.startsWith('#')).toBe(true);
   });
 
+  it('accepts optional avatarPhoto when valid', () => {
+    const photo =
+      'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k=';
+    const accounts = validateAccounts([validAccount({ avatarPhoto: photo })]);
+    expect(accounts).toHaveLength(1);
+    expect(accounts[0].avatarPhoto).toBe(photo);
+  });
+
+  it('strips invalid avatarPhoto', () => {
+    const accounts = validateAccounts([validAccount({ avatarPhoto: 'javascript:alert(1)' })]);
+    expect(accounts).toHaveLength(1);
+    expect(accounts[0].avatarPhoto).toBeUndefined();
+  });
+
   it('rejects invalid salt, hash, and id', () => {
     expect(validateAccounts([validAccount({ salt: 'short' })])).toHaveLength(0);
     expect(validateAccounts([validAccount({ hash: 'bad' })])).toHaveLength(0);

@@ -26,6 +26,7 @@ const RaceLobby = lazy(() => import('./pages/RaceLobby'));
 const RacePage = lazy(() => import('./pages/RacePage'));
 const Settings = lazy(() => import('./components/Settings'));
 const ProgressTracker = lazy(() => import('./components/ProgressTracker'));
+const Friends = lazy(() => import('./pages/Friends'));
 const AboutLegal = lazy(() => import('./components/AboutLegal'));
 
 function PageFallback() {
@@ -45,6 +46,7 @@ const PAGE_TITLES: Record<AppView, string> = {
   leaderboard: 'Leaderboard',
   race: 'Ghost race',
   'race-run': 'Ghost race',
+  friends: 'Friends',
 };
 
 /**
@@ -104,6 +106,7 @@ function AppShell() {
       { id: 'nav-guide', label: 'Go to Python guide', hint: 'navigate', run: () => setView('guide') },
       { id: 'nav-leaderboard', label: 'Go to Leaderboard', hint: 'navigate', run: () => setView('leaderboard') },
       { id: 'nav-race', label: 'Go to Race', hint: 'navigate', run: () => setView('race') },
+      { id: 'nav-friends', label: 'Go to Friends', hint: 'navigate', run: () => setView('friends') },
       { id: 'nav-contribute', label: 'Contribute / request a language', hint: 'navigate', run: () => setView('contribute') },
       { id: 'nav-progress', label: 'Go to Progress', hint: 'navigate', run: () => setView('progress') },
       { id: 'nav-settings', label: 'Go to Settings', hint: 'navigate', run: () => setView('settings') },
@@ -165,12 +168,17 @@ function AppShell() {
               onFocusChange={setChromeHidden}
             />
           )}
-          {view === 'settings' && <Settings onShowLogin={() => setView('login')} />}
+          {view === 'settings' && (
+            <Settings onShowLogin={() => setView('login')} onManageFriends={() => setView('friends')} />
+          )}
+          {view === 'friends' && <Friends onShowLogin={() => setView('login')} />}
           {view === 'progress' && <ProgressTracker exercises={EXERCISES} />}
           {view === 'about' && <AboutLegal />}
           {view === 'getting-started' && <GettingStarted />}
           {view === 'leaderboard' && <Leaderboard />}
-          {view === 'race' && <RaceLobby onStartRace={startRace} />}
+          {view === 'race' && (
+            <RaceLobby onStartRace={startRace} onManageFriends={() => setView('friends')} />
+          )}
           {view === 'race-run' && activeId && raceGhost && (
             <RacePage
               key={`${activeId}-${JSON.stringify(raceGhost.source)}`}

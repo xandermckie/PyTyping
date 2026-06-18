@@ -1,4 +1,5 @@
 import { loadValidated, removeKey, saveJSON } from './storage';
+import { validateAvatarPhotoDataUrl } from './profile-photo';
 import { clampNumber, isNumber, isObject, isString } from './validation';
 import { getExerciseById } from './exercises';
 import { buildSyntheticReplay } from './synthetic-ghosts';
@@ -191,10 +192,12 @@ function validateFriendGhost(raw: unknown): FriendGhost | null {
   if (!Array.isArray(replays)) return null;
   const clean = replays.map(validateTypingReplay).filter((r): r is TypingReplay => r !== null);
   if (clean.length === 0) return null;
+  const photo = validateAvatarPhotoDataUrl(raw.avatarPhoto) ?? undefined;
   return {
     id,
     displayName,
     importedAt: isString(importedAt) ? importedAt : new Date().toISOString(),
+    ...(photo ? { avatarPhoto: photo } : {}),
     replays: clean,
   };
 }

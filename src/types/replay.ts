@@ -21,6 +21,16 @@ export interface FriendGhost {
   id: string;
   displayName: string;
   importedAt: string;
+  avatarPhoto?: string;
+  replays: TypingReplay[];
+}
+
+/** Shareable friend profile bundle (friend codes and .json exports). */
+export interface FriendShareBundle {
+  app: 'pytyping-friend';
+  version: 1;
+  displayName: string;
+  avatarPhoto?: string;
   replays: TypingReplay[];
 }
 

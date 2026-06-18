@@ -101,8 +101,13 @@ export default function AboutLegal() {
             PyTyping does not fetch ghosts from the network.
           </p>
           <p className="mt-3">
-            Backups (Settings → Export) include ghost replays, friend imports, and race rank stats alongside
-            progress and accounts.
+            Friend codes are compressed pasteable strings you share manually (chat, email, etc.). They may
+            include an optional profile photo thumbnail and replay timing data. Profile photos for local
+            accounts are stored only on your device and in backup exports — never uploaded to a server.
+          </p>
+          <p className="mt-3">
+            Backups (Settings → Export) include ghost replays, friend imports, profile photos, and race rank
+            stats alongside progress and accounts.
           </p>
         </Section>
 

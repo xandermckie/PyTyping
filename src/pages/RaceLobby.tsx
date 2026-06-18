@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Avatar from '../components/Avatar';
 import RankBadge from '../components/RankBadge';
+import ShareGhostModal from '../components/ShareGhostModal';
 import { EXERCISES, DIFFICULTIES, allTopics, getExerciseById } from '../lib/exercises';
+import { importFriendPayload } from '../lib/friend-codes';
 import { getNextRank, getRaceRankState } from '../lib/race-rank';
 import {
   BUILTIN_TIERS,
@@ -14,15 +17,16 @@ import {
   getBestReplay,
   getFriendGhosts,
   getReplays,
-  importFriendGhostBundle,
   removeFriendGhost,
 } from '../lib/replays';
+import { AVATAR_COLORS } from '../lib/auth';
 import { useSession } from '../context/SessionContext';
 import type { Difficulty } from '../types/exercise';
-import type { GhostSource, SyntheticGhostTier, TypingReplay } from '../types/replay';
+import type { FriendGhost, GhostSource, SyntheticGhostTier, TypingReplay } from '../types/replay';
 
 interface RaceLobbyProps {
   onStartRace: (exerciseId: string, source: GhostSource) => void;
+  onManageFriends?: () => void;
 }
 
 type DifficultyFilter = Difficulty | 'all';
@@ -34,6 +38,7 @@ interface GhostOption {
   replay: TypingReplay;
   source: GhostSource;
   wpm: number;
+  friend?: FriendGhost;
 }
 
 function builtinKey(tier: SyntheticGhostTier, exerciseId: string): string {
@@ -46,23 +51,24 @@ function defaultGhostKey(scopeId: string, exerciseId: string): string {
   return builtinKey('easy', exerciseId);
 }
 
-export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
-  const { scopeId, displayName, accounts, replayVersion, notifyReplayChange } = useSession();
+export default function RaceLobby({ onStartRace, onManageFriends }: RaceLobbyProps) {
+  const { scopeId, displayName, avatarColor, avatarPhoto, accounts, replayVersion, notifyReplayChange } =
+    useSession();
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all');
   const [topic, setTopic] = useState<string>('all');
   const [query, setQuery] = useState('');
   const [exerciseId, setExerciseId] = useState(EXERCISES[0]?.id ?? '');
   const [ghostKey, setGhostKey] = useState('');
   const [importError, setImportError] = useState<string | null>(null);
-  const [friendName, setFriendName] = useState('');
   const [friendVersion, setFriendVersion] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const rankState = useMemo(() => getRaceRankState(scopeId), [scopeId, replayVersion]);
   const nextRank = useMemo(() => getNextRank(rankState.peakRaceWpm), [rankState.peakRaceWpm]);
 
   const topics = useMemo(() => allTopics(), []);
-  const friends = useMemo(() => getFriendGhosts(), [friendVersion]);
+  const friends = useMemo(() => getFriendGhosts(), [friendVersion, replayVersion]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -131,6 +137,7 @@ export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
           replay,
           source: { kind: 'friend', friendId: friend.id, replayId: replay.id },
           wpm: replay.wpm,
+          friend,
         });
       }
     }
@@ -157,30 +164,30 @@ export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
     const key = defaultGhostKey(scopeId, exerciseId);
     const exists = ghostOptions.some((g) => g.key === key);
     setGhostKey(exists ? key : ghostOptions[0]?.key ?? '');
-  }, [exerciseId, scopeId, replayVersion]);
+  }, [exerciseId, scopeId, replayVersion, ghostOptions]);
 
   const selectedGhost = ghostOptions.find((g) => g.key === ghostKey) ?? ghostOptions[0];
 
-  const handleImport = useCallback(
+  const handleQuickImport = useCallback(
     async (file: File) => {
       setImportError(null);
       try {
-        const text = await file.text();
-        const result = importFriendGhostBundle(text, friendName);
+        const result = importFriendPayload(await file.text());
         if (!result.ok) {
           setImportError(result.error);
           return;
         }
-        if (result.replay.exerciseId === exerciseId) {
-          setGhostKey(`friend:${result.friend?.id}:${result.replay.id}`);
+        const replay = result.replays[0];
+        if (replay && replay.exerciseId === exerciseId) {
+          setGhostKey(`friend:${result.friend.id}:${replay.id}`);
         }
-        setFriendName('');
         setFriendVersion((v) => v + 1);
+        notifyReplayChange();
       } catch {
         setImportError('Could not read that file.');
       }
     },
-    [exerciseId, friendName],
+    [exerciseId, notifyReplayChange],
   );
 
   const handleExport = useCallback(() => {
@@ -209,6 +216,16 @@ export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
     }`;
 
   const exercise = getExerciseById(exerciseId);
+
+  const selectedFriend = selectedGhost?.friend;
+  let selectedAccountForAvatar: { name: string; color: string; photo?: string } | null = null;
+  if (selectedGhost?.source.kind === 'self') {
+    selectedAccountForAvatar = { name: displayName, color: avatarColor, photo: avatarPhoto };
+  } else if (selectedGhost?.source.kind === 'account') {
+    const source = selectedGhost.source;
+    const acc = accounts.find((a) => a.id === source.profileId);
+    if (acc) selectedAccountForAvatar = { name: acc.username, color: acc.avatarColor, photo: acc.avatarPhoto };
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -289,24 +306,56 @@ export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
             </optgroup>
           ))}
         </select>
+        {selectedGhost && (selectedFriend || selectedAccountForAvatar) && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-content-secondary">
+            {selectedFriend ? (
+              <>
+                <Avatar
+                  name={selectedFriend.displayName}
+                  color={AVATAR_COLORS[0]}
+                  photoUrl={selectedFriend.avatarPhoto}
+                />
+                <span>{selectedFriend.displayName}</span>
+              </>
+            ) : selectedAccountForAvatar ? (
+              <>
+                <Avatar
+                  name={selectedAccountForAvatar.name}
+                  color={selectedAccountForAvatar.color}
+                  photoUrl={selectedAccountForAvatar.photo}
+                />
+                <span>{selectedAccountForAvatar.name}</span>
+              </>
+            ) : null}
+          </div>
+        )}
         {selectedGhost && (
           <div className="mt-3 flex flex-wrap gap-2">
-            {selectedGhost.source.kind !== 'builtin' && (
+            {selectedGhost.source.kind === 'self' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShareOpen(true)}
+                  className="rounded-md border border-accent bg-[var(--color-accent-subtle)] px-3 py-1.5 text-xs font-medium text-accent hover:bg-background-secondary"
+                >
+                  Share ghost
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteReplay}
+                  className="rounded-md border border-error px-3 py-1.5 text-xs text-error hover:bg-background-secondary"
+                >
+                  Delete replay
+                </button>
+              </>
+            )}
+            {selectedGhost.source.kind !== 'builtin' && selectedGhost.source.kind !== 'self' && (
               <button
                 type="button"
                 onClick={handleExport}
                 className="rounded-md border border-border-tertiary px-3 py-1.5 text-xs text-content-secondary hover:bg-background-secondary"
               >
-                Export selected ghost
-              </button>
-            )}
-            {selectedGhost.source.kind === 'self' && (
-              <button
-                type="button"
-                onClick={handleDeleteReplay}
-                className="rounded-md border border-error px-3 py-1.5 text-xs text-error hover:bg-background-secondary"
-              >
-                Delete replay
+                Export JSON
               </button>
             )}
             {selectedGhost.source.kind === 'friend' && (
@@ -318,6 +367,7 @@ export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
                   if (friendId) removeFriendGhost(friendId);
                   setGhostKey(defaultGhostKey(scopeId, exerciseId));
                   setFriendVersion((v) => v + 1);
+                  notifyReplayChange();
                 }}
                 className="rounded-md border border-error px-3 py-1.5 text-xs text-error hover:bg-background-secondary"
               >
@@ -329,18 +379,28 @@ export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
       </section>
 
       <section className="mb-10 rounded-lg border border-border-tertiary bg-background-secondary p-5">
-        <h2 className="text-sm font-medium text-content-primary">Import friend ghost</h2>
+        <h2 className="text-sm font-medium text-content-primary">Friends</h2>
         <p className="mt-1 text-sm text-content-tertiary">
-          Upload a <code className="text-content-secondary">.json</code> ghost file a friend exported.
+          Add friends with a friend code or JSON file on the{' '}
+          {onManageFriends ? (
+            <button type="button" onClick={onManageFriends} className="text-accent hover:underline">
+              Friends page
+            </button>
+          ) : (
+            'Friends page'
+          )}
+          .
         </p>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-          <input
-            type="text"
-            value={friendName}
-            onChange={(e) => setFriendName(e.target.value)}
-            placeholder="Friend display name (optional)"
-            className="flex-1 rounded-md border border-border-tertiary bg-background-primary px-3 py-2 text-sm"
-          />
+        <div className="mt-4 flex flex-wrap gap-2">
+          {onManageFriends && (
+            <button
+              type="button"
+              onClick={onManageFriends}
+              className="rounded-md border border-border-tertiary px-4 py-2 text-sm text-content-primary hover:bg-background-tertiary"
+            >
+              Manage friends
+            </button>
+          )}
           <input
             ref={fileRef}
             type="file"
@@ -348,16 +408,16 @@ export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) void handleImport(file);
+              if (file) void handleQuickImport(file);
               e.target.value = '';
             }}
           />
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="rounded-md border border-border-tertiary px-4 py-2 text-sm text-content-primary hover:bg-background-tertiary"
+            className="rounded-md border border-border-tertiary px-4 py-2 text-sm text-content-secondary hover:bg-background-tertiary"
           >
-            Choose file…
+            Quick import file…
           </button>
         </div>
         {importError && <p className="mt-2 text-sm text-error">{importError}</p>}
@@ -373,6 +433,16 @@ export default function RaceLobby({ onStartRace }: RaceLobbyProps) {
       >
         Start race
       </button>
+
+      {selectedGhost?.source.kind === 'self' && (
+        <ShareGhostModal
+          open={shareOpen}
+          displayName={displayName}
+          replay={selectedGhost.replay}
+          avatarPhoto={avatarPhoto}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </div>
   );
 }

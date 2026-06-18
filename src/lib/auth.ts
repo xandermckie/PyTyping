@@ -8,6 +8,7 @@
  */
 import { loadJSON, loadValidated, removeKey, saveJSON } from './storage';
 import { clearProgress } from './progress';
+import { validateAvatarPhotoDataUrl } from './profile-photo';
 import {
   AVATAR_COLORS,
   isObject,
@@ -30,6 +31,8 @@ export interface Account {
   hash: string;
   createdAt: string;
   avatarColor: string;
+  /** Optional JPEG/PNG/WebP data URL stored locally. */
+  avatarPhoto?: string;
 }
 
 export type Session = { kind: 'guest' } | { kind: 'account'; accountId: string };
@@ -132,6 +135,7 @@ function validateAccount(raw: unknown): Account | null {
   if (cleanedUsername.length < 3) return null;
 
   const fallbackColor = pickAvatarColorFromUsername(cleanedUsername);
+  const photo = validateAvatarPhotoDataUrl(raw.avatarPhoto) ?? undefined;
   return {
     id,
     username: cleanedUsername,
@@ -139,6 +143,7 @@ function validateAccount(raw: unknown): Account | null {
     hash,
     createdAt: isString(createdAt) ? createdAt : new Date().toISOString(),
     avatarColor: sanitizeAvatarColor(avatarColor, fallbackColor),
+    ...(photo ? { avatarPhoto: photo } : {}),
   };
 }
 
@@ -205,6 +210,20 @@ export async function verifyLogin(rawUsername: string, password: string): Promis
   const hash = await deriveHash(password, account.salt);
   if (!safeEqual(hash, account.hash)) return { ok: false, error: 'Incorrect password.' };
   return { ok: true, account };
+}
+
+export function setAccountAvatarPhoto(accountId: string, photo: string | null): boolean {
+  const accounts = loadAccounts();
+  const idx = accounts.findIndex((a) => a.id === accountId);
+  if (idx < 0) return false;
+  const validated = photo ? validateAvatarPhotoDataUrl(photo) : null;
+  if (photo && !validated) return false;
+  const next = { ...accounts[idx] };
+  if (validated) next.avatarPhoto = validated;
+  else delete next.avatarPhoto;
+  const updated = [...accounts];
+  updated[idx] = next;
+  return saveAccounts(updated);
 }
 
 export function deleteAccount(id: string): Account[] {

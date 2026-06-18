@@ -11,6 +11,7 @@ import {
   deleteAccount,
   getSession,
   loadAccounts,
+  setAccountAvatarPhoto,
   setSession as persistSession,
   verifyLogin,
 } from '../lib/auth';
@@ -25,11 +26,13 @@ interface SessionContextValue {
   scopeId: string;
   displayName: string;
   avatarColor: string;
+  avatarPhoto?: string;
   accounts: Account[];
   login: (username: string, password: string) => Promise<AuthResult>;
   signup: (username: string, password: string, carryGuest: boolean) => Promise<AuthResult>;
   logout: () => void;
   removeAccount: (id: string) => void;
+  setAvatarPhoto: (photo: string | null) => boolean;
   progressVersion: number;
   notifyProgressChange: () => void;
   replayVersion: number;
@@ -129,6 +132,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [bump],
   );
 
+  const setAvatarPhoto = useCallback(
+    (photo: string | null): boolean => {
+      if (!account) return false;
+      const ok = setAccountAvatarPhoto(account.id, photo);
+      if (ok) setAccounts(loadAccounts());
+      return ok;
+    },
+    [account],
+  );
+
   const value = useMemo<SessionContextValue>(() => {
     const isGuest = !account;
     return {
@@ -138,17 +151,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       scopeId: account ? account.id : 'guest',
       displayName: account ? account.username : 'Guest',
       avatarColor: account ? account.avatarColor : '#888780',
+      avatarPhoto: account?.avatarPhoto,
       accounts,
       login,
       signup,
       logout,
       removeAccount,
+      setAvatarPhoto,
       progressVersion,
       notifyProgressChange: bump,
       replayVersion,
       notifyReplayChange: bumpReplay,
     };
-  }, [account, session, accounts, login, signup, logout, removeAccount, progressVersion, bump, replayVersion, bumpReplay]);
+  }, [account, session, accounts, login, signup, logout, removeAccount, setAvatarPhoto, progressVersion, bump, replayVersion, bumpReplay]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

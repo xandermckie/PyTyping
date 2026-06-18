@@ -1,15 +1,19 @@
 import { useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
+import Avatar from './Avatar';
 import { useSettings } from '../context/SettingsContext';
 import { CODE_FONTS, UI_FONTS } from '../lib/settings';
 import { useSession } from '../context/SessionContext';
 import { exportBackup, importBackup, BACKUP_MAX_BYTES } from '../lib/backup';
+import { resizeImageToDataUrl } from '../lib/profile-photo';
 import { THEME_OPTIONS } from '../lib/theme';
 import type { BaseColors } from '../lib/theme';
 
 interface SettingsProps {
   /** Open the login screen (shown to guests). */
   onShowLogin: () => void;
+  /** Open the Friends page. */
+  onManageFriends?: () => void;
 }
 
 const COLOR_FIELDS: Array<{ key: keyof BaseColors; label: string }> = [
@@ -65,13 +69,16 @@ const selectClass =
 const btnClass =
   'rounded-md border border-border-tertiary px-4 py-2 text-sm text-content-secondary transition-colors hover:bg-background-secondary';
 
-export default function Settings({ onShowLogin }: SettingsProps) {
+export default function Settings({ onShowLogin, onManageFriends }: SettingsProps) {
   const { settings, update, reset, persistError } = useSettings();
-  const { isGuest, account, displayName, logout, removeAccount } = useSession();
+  const { isGuest, account, displayName, avatarColor, avatarPhoto, setAvatarPhoto, logout, removeAccount } =
+    useSession();
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const setColor = (key: keyof BaseColors, value: string) => {
     update({ themeId: 'custom', customColors: { ...settings.customColors, [key]: value } });
@@ -115,6 +122,21 @@ export default function Settings({ onShowLogin }: SettingsProps) {
     }
   };
 
+  const onPhotoFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setPhotoError(null);
+    const result = await resizeImageToDataUrl(file);
+    if (!result.ok) {
+      setPhotoError(result.error);
+      return;
+    }
+    if (!setAvatarPhoto(result.dataUrl)) {
+      setPhotoError('Could not save profile photo. Storage may be full.');
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-2xl pb-12">
       <h1 className="mb-8 text-lg font-medium text-content-primary">Settings</h1>
@@ -141,16 +163,26 @@ export default function Settings({ onShowLogin }: SettingsProps) {
           </div>
         ) : (
           <div className="rounded-lg border border-border-tertiary bg-background-secondary p-4">
-            <p className="text-sm text-content-primary">
-              Signed in as <span className="font-medium">{displayName}</span>
-            </p>
-            <p className="mt-1 text-xs text-content-tertiary">
-              Stored locally on this device. No cloud sync. Use Export backup to move between devices.
-            </p>
+            <div className="flex items-center gap-3">
+              <Avatar name={displayName} color={avatarColor} photoUrl={avatarPhoto} size="md" />
+              <div>
+                <p className="text-sm text-content-primary">
+                  Signed in as <span className="font-medium">{displayName}</span>
+                </p>
+                <p className="mt-1 text-xs text-content-tertiary">
+                  Stored locally on this device. No cloud sync. Use Export backup to move between devices.
+                </p>
+              </div>
+            </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" onClick={logout} className={btnClass}>
                 Log out
               </button>
+              {onManageFriends && (
+                <button type="button" onClick={onManageFriends} className={btnClass}>
+                  Manage friends
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -166,6 +198,46 @@ export default function Settings({ onShowLogin }: SettingsProps) {
           </div>
         )}
       </section>
+
+      {!isGuest && (
+        <section className="mb-8">
+          <SectionTitle>Profile photo</SectionTitle>
+          <div className="rounded-lg border border-border-tertiary bg-background-secondary p-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <Avatar name={displayName} color={avatarColor} photoUrl={avatarPhoto} size="lg" />
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => photoRef.current?.click()} className={btnClass}>
+                  Upload photo
+                </button>
+                {avatarPhoto && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoError(null);
+                      if (!setAvatarPhoto(null)) setPhotoError('Could not remove profile photo.');
+                    }}
+                    className={btnClass}
+                  >
+                    Remove photo
+                  </button>
+                )}
+              </div>
+              <input
+                ref={photoRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={onPhotoFile}
+                className="hidden"
+                aria-hidden="true"
+              />
+            </div>
+            <p className="mt-3 text-xs text-content-tertiary">
+              Stored locally and included in backup exports. Shown when you share friend codes.
+            </p>
+            {photoError && <p className="mt-2 text-sm text-error">{photoError}</p>}
+          </div>
+        </section>
+      )}
 
       {/* Theme */}
       <section className="mb-8">

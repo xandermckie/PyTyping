@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import TypingInput from '../components/TypingInput';
 import RaceResultsPanel from '../components/RaceResultsPanel';
+import ShareGhostModal from '../components/ShareGhostModal';
 import { getExerciseById } from '../lib/exercises';
 import { recordRaceResult } from '../lib/race-rank';
 import {
@@ -26,7 +27,7 @@ type Phase = 'racing' | 'results';
 
 export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChange }: RacePageProps) {
   const exercise = getExerciseById(exerciseId);
-  const { scopeId, displayName, notifyReplayChange } = useSession();
+  const { scopeId, displayName, avatarPhoto, notifyReplayChange } = useSession();
   const ghost = useMemo(() => resolveGhost(ghostSource), [ghostSource]);
   const [phase, setPhase] = useState<Phase>('racing');
   const [stats, setStats] = useState<TypingStats | null>(null);
@@ -34,6 +35,7 @@ export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChang
   const [rankResult, setRankResult] = useState<ReturnType<typeof recordRaceResult> | null>(null);
   const [ghostFinishedFirst, setGhostFinishedFirst] = useState(false);
   const [restartKey, setRestartKey] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
   const playerFinishMsRef = useRef(0);
   const lastEventsRef = useRef<ReplayEvent[]>([]);
   const ghostFinishedRef = useRef(false);
@@ -119,18 +121,28 @@ export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChang
     );
   }
 
-  if (phase === 'results' && stats && rankResult) {
+  if (phase === 'results' && stats && rankResult && savedReplay) {
     return (
-      <RaceResultsPanel
-        stats={stats}
-        ghost={ghost}
-        playerFinishMs={playerFinishMsRef.current}
-        rank={rankResult.newRank}
-        rankedUp={rankResult.rankedUp}
-        onRematch={handleRematch}
-        onLobby={onExit}
-        onExportGhost={handleExport}
-      />
+      <>
+        <RaceResultsPanel
+          stats={stats}
+          ghost={ghost}
+          playerFinishMs={playerFinishMsRef.current}
+          rank={rankResult.newRank}
+          rankedUp={rankResult.rankedUp}
+          onRematch={handleRematch}
+          onLobby={onExit}
+          onExportGhost={handleExport}
+          onShareGhost={() => setShareOpen(true)}
+        />
+        <ShareGhostModal
+          open={shareOpen}
+          displayName={displayName}
+          replay={savedReplay}
+          avatarPhoto={avatarPhoto}
+          onClose={() => setShareOpen(false)}
+        />
+      </>
     );
   }
 

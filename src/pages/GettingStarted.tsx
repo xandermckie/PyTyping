@@ -79,6 +79,26 @@ export default function GettingStarted() {
             <span className="font-medium text-content-primary">Race this run</span> on the results screen.
             Your best race WPM sets your rank from Bronze to Diamond.
           </p>
+          <p>
+            Share ghosts via friend codes or JSON from the{' '}
+            <span className="font-medium text-content-primary">Friends</span> page or race results. Paste a
+            friend&apos;s code to add them offline — no server required.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-base font-medium text-content-primary">Profile photos &amp; friends</h2>
+        <div className="space-y-2 text-sm text-content-secondary">
+          <p>
+            Logged-in users can upload a profile photo in{' '}
+            <span className="font-medium text-content-primary">Settings → Profile photo</span>. Photos are stored
+            locally and included when you share a friend code (optional).
+          </p>
+          <p>
+            Open <span className="font-medium text-content-primary">Friends</span> (mobile menu or Settings) to
+            manage imported friends, paste friend codes, or import JSON bundles.
+          </p>
         </div>
       </section>
 

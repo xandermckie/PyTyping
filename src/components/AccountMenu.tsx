@@ -1,9 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import RankBadge from './RankBadge';
+import Avatar from './Avatar';
 import { useSession } from '../context/SessionContext';
 import { getRaceRankState } from '../lib/race-rank';
-import { AVATAR_COLORS } from '../lib/auth';
-import { sanitizeHexColor } from '../lib/validation';
 import DisclosurePanel from './DisclosurePanel';
 
 interface AccountMenuProps {
@@ -13,26 +12,12 @@ interface AccountMenuProps {
   onManage: () => void;
 }
 
-function Avatar({ name, color }: { name: string; color: string }) {
-  const initial = name.trim().charAt(0).toUpperCase() || '?';
-  const safeColor = sanitizeHexColor(color, AVATAR_COLORS[0]);
-  return (
-    <span
-      aria-hidden="true"
-      className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium text-background-primary"
-      style={{ background: safeColor }}
-    >
-      {initial}
-    </span>
-  );
-}
-
 /**
  * Header account control. Guests see a "Log in" affordance; logged-in users see
  * their name with a menu to open Settings or log out. Local-only — no server.
  */
 export default function AccountMenu({ onShowLogin, onManage }: AccountMenuProps) {
-  const { isGuest, displayName, avatarColor, logout, scopeId, replayVersion } = useSession();
+  const { isGuest, displayName, avatarColor, avatarPhoto, logout, scopeId, replayVersion } = useSession();
   const peakRaceWpm = useMemo(
     () => getRaceRankState(scopeId).peakRaceWpm,
     [scopeId, replayVersion],
@@ -64,7 +49,7 @@ export default function AccountMenu({ onShowLogin, onManage }: AccountMenuProps)
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
       >
-        <Avatar name={displayName} color={avatarColor} />
+        <Avatar name={displayName} color={avatarColor} photoUrl={avatarPhoto} />
         <span className="hidden max-w-[8rem] truncate sm:inline">{displayName}</span>
         <span className="hidden sm:inline">
           <RankBadge wpm={peakRaceWpm} />

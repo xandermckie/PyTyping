@@ -15,7 +15,8 @@ export type AppView =
   | 'guide'
   | 'contribute'
   | 'getting-started'
-  | 'leaderboard';
+  | 'leaderboard'
+  | 'friends';
 
 interface NavItem {
   id: AppView;
@@ -33,6 +34,7 @@ const PRIMARY_NAV: NavItem[] = [
 ];
 
 const MOBILE_EXTRA_NAV: NavItem[] = [
+  { id: 'friends', label: 'Friends' },
   { id: 'getting-started', label: 'Getting Started' },
   { id: 'about', label: 'About & legal' },
 ];

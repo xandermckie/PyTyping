@@ -14,6 +14,7 @@ interface RaceResultsPanelProps {
   onRematch: () => void;
   onLobby: () => void;
   onExportGhost: () => void;
+  onShareGhost: () => void;
 }
 
 export default function RaceResultsPanel({
@@ -25,6 +26,7 @@ export default function RaceResultsPanel({
   onRematch,
   onLobby,
   onExportGhost,
+  onShareGhost,
 }: RaceResultsPanelProps) {
   const ghostFinishMs = getGhostFinishMs(ghost);
   const playerWon = playerFinishMs <= ghostFinishMs;
@@ -89,10 +91,17 @@ export default function RaceResultsPanel({
         </button>
         <button
           type="button"
+          onClick={onShareGhost}
+          className="rounded-md border border-accent bg-[var(--color-accent-subtle)] px-4 py-2 text-sm font-medium text-accent hover:bg-background-secondary"
+        >
+          Share ghost
+        </button>
+        <button
+          type="button"
           onClick={onExportGhost}
           className="rounded-md border border-border-tertiary px-4 py-2 text-sm text-content-secondary hover:bg-background-secondary"
         >
-          Export your ghost
+          Export JSON
         </button>
       </div>
     </div>
