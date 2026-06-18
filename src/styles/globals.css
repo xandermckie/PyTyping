@@ -75,6 +75,19 @@ html,
 body,
 #root {
   height: 100%;
+  min-height: 100dvh;
+}
+
+/* Smaller code font on narrow screens — 14px is too small to read on phones */
+@media (max-width: 640px) {
+  :root {
+    --font-code-size: 12px;
+  }
+}
+
+/* Safe-area padding utility for notched iPhones */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
 }
 
 body {

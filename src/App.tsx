@@ -1,24 +1,31 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { SessionProvider, useSession } from './context/SessionContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
-import TypingPage from './pages/TypingPage';
-import PythonGuide from './pages/PythonGuide';
-import Contribute from './pages/Contribute';
-import GettingStarted from './pages/GettingStarted';
-import Leaderboard from './pages/Leaderboard';
-import Settings from './components/Settings';
-import ProgressTracker from './components/ProgressTracker';
 import AccountMenu from './components/AccountMenu';
 import LoginScreen from './components/LoginScreen';
-import AboutLegal from './components/AboutLegal';
 import Footer from './components/Footer';
 import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import type { Command } from './components/CommandPalette';
 import { EXERCISES } from './lib/exercises';
 import { THEME_OPTIONS } from './lib/theme';
+
+// Lazy-load pages not needed on the initial render — keeps the first-paint
+// bundle lean. Each becomes its own chunk that Vite splits automatically.
+const TypingPage = lazy(() => import('./pages/TypingPage'));
+const PythonGuide = lazy(() => import('./pages/PythonGuide'));
+const Contribute = lazy(() => import('./pages/Contribute'));
+const GettingStarted = lazy(() => import('./pages/GettingStarted'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
+const Settings = lazy(() => import('./components/Settings'));
+const ProgressTracker = lazy(() => import('./components/ProgressTracker'));
+const AboutLegal = lazy(() => import('./components/AboutLegal'));
+
+function PageFallback() {
+  return <div className="py-16 text-center text-sm text-content-tertiary">Loading…</div>;
+}
 
 type View = 'home' | 'typing' | 'settings' | 'progress' | 'login' | 'about' | 'guide' | 'contribute' | 'getting-started' | 'leaderboard';
 
@@ -120,8 +127,8 @@ function AppShell() {
           <button type="button" onClick={goHome} className="rounded-md focus-visible:outline-none" aria-label="PyTyping home">
             <Logo size={24} />
           </button>
-          <div className="flex items-center gap-0.5">
-            <nav className="flex gap-0.5" aria-label="Primary">
+          <div className="flex min-w-0 items-center gap-0.5">
+            <nav className="flex gap-0.5 overflow-x-auto" aria-label="Primary" style={{ scrollbarWidth: 'none' }}>
               {NAV.map((item) => {
                 const active = view === item.id;
                 return (
@@ -130,7 +137,7 @@ function AppShell() {
                     type="button"
                     aria-current={active ? 'page' : undefined}
                     onClick={() => setView(item.id)}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    className={`shrink-0 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3 ${
                       active
                         ? 'text-accent'
                         : 'text-content-secondary hover:bg-background-secondary hover:text-content-primary'
@@ -150,22 +157,24 @@ function AppShell() {
 
       <main className="flex-1 px-4 py-8 sm:px-6">
         {view === 'home' && <Home onSelectExercise={startExercise} />}
-        {view === 'guide' && <PythonGuide />}
-        {view === 'contribute' && <Contribute />}
-        {view === 'typing' && activeId && (
-          <TypingPage
-            key={activeId}
-            exerciseId={activeId}
-            onExit={goHome}
-            onSelectExercise={startExercise}
-            onFocusChange={setChromeHidden}
-          />
-        )}
-        {view === 'settings' && <Settings onShowLogin={() => setView('login')} />}
-        {view === 'progress' && <ProgressTracker exercises={EXERCISES} />}
-        {view === 'about' && <AboutLegal />}
-        {view === 'getting-started' && <GettingStarted />}
-        {view === 'leaderboard' && <Leaderboard />}
+        <Suspense fallback={<PageFallback />}>
+          {view === 'guide' && <PythonGuide />}
+          {view === 'contribute' && <Contribute />}
+          {view === 'typing' && activeId && (
+            <TypingPage
+              key={activeId}
+              exerciseId={activeId}
+              onExit={goHome}
+              onSelectExercise={startExercise}
+              onFocusChange={setChromeHidden}
+            />
+          )}
+          {view === 'settings' && <Settings onShowLogin={() => setView('login')} />}
+          {view === 'progress' && <ProgressTracker exercises={EXERCISES} />}
+          {view === 'about' && <AboutLegal />}
+          {view === 'getting-started' && <GettingStarted />}
+          {view === 'leaderboard' && <Leaderboard />}
+        </Suspense>
       </main>
 
       <Footer hidden={chromeHidden} onShowLegal={() => setView('about')} />

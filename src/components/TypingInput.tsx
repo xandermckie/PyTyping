@@ -391,7 +391,7 @@ export default function TypingInput({
       <div className="mb-6 h-[2px] w-full overflow-hidden rounded-full bg-background-tertiary">
         <div
           className="h-full bg-accent transition-[width] duration-75"
-          style={{ width: `${progressPct}%` }}
+          style={{ width: `${progressPct}%`, willChange: 'width' }}
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
@@ -404,7 +404,7 @@ export default function TypingInput({
       <div className="relative" onMouseDown={focusInput}>
         <div
           aria-hidden="true"
-          className={`rounded-lg border border-border-tertiary bg-background-secondary p-6 font-mono leading-[1.75] transition-opacity shadow-[var(--shadow-sm)] ${
+          className={`rounded-lg border border-border-tertiary bg-background-secondary p-3 sm:p-6 font-mono leading-[1.75] transition-opacity shadow-[var(--shadow-sm)] ${
             focused || done ? 'opacity-100' : 'opacity-55'
           }`}
           style={{ fontSize: 'var(--font-code-size)' }}
@@ -449,7 +449,7 @@ export default function TypingInput({
           spellCheck={false}
           inputMode="text"
           enterKeyHint="enter"
-          className="absolute inset-0 h-full w-full cursor-text resize-none rounded-lg bg-transparent p-6 font-mono text-transparent caret-transparent outline-none"
+          className="absolute inset-0 h-full w-full cursor-text resize-none rounded-lg bg-transparent p-3 sm:p-6 font-mono text-transparent caret-transparent outline-none"
           style={{ fontSize: 'var(--font-code-size)' }}
         />
 
@@ -465,7 +465,7 @@ export default function TypingInput({
       </div>
 
       {/* On-screen control keys for mobile (no Tab/Esc on most soft keyboards). */}
-      <div className="mt-3 flex gap-2 sm:hidden">
+      <div className="mt-3 flex gap-2 pb-safe sm:hidden">
         {[
           { label: 'Tab', fn: handleTab },
           { label: 'Enter', fn: handleEnter },
@@ -476,7 +476,7 @@ export default function TypingInput({
             key={k.label}
             type="button"
             onMouseDown={holdFocus(k.fn)}
-            className="flex-1 rounded-md border border-border-tertiary bg-background-secondary py-2 text-sm text-content-secondary"
+            className="flex-1 rounded-md border border-border-tertiary bg-background-secondary py-2 text-sm text-content-secondary active:bg-background-tertiary"
           >
             {k.label}
           </button>

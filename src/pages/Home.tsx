@@ -16,6 +16,7 @@ type DifficultyFilter = Difficulty | 'all';
 export default function Home({ onSelectExercise }: HomeProps) {
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all');
   const [topic, setTopic] = useState<string>('all');
+  const [query, setQuery] = useState('');
   const { scopeId, progressVersion } = useSession();
 
   const topics = useMemo(() => allTopics(), []);
@@ -28,15 +29,15 @@ export default function Home({ onSelectExercise }: HomeProps) {
   const achievements = useMemo(() => getAchievements(progress, history), [progress, history]);
   const unlockedAchievements = achievements.filter((a) => a.unlocked).length;
 
-  const filtered = useMemo(
-    () =>
-      EXERCISES.filter(
-        (ex) =>
-          (difficulty === 'all' || ex.difficulty === difficulty) &&
-          (topic === 'all' || ex.topics.includes(topic)),
-      ),
-    [difficulty, topic],
-  );
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return EXERCISES.filter(
+      (ex) =>
+        (difficulty === 'all' || ex.difficulty === difficulty) &&
+        (topic === 'all' || ex.topics.includes(topic)) &&
+        (!q || ex.title.toLowerCase().includes(q) || ex.description.toLowerCase().includes(q) || ex.topics.some((t) => t.toLowerCase().includes(q))),
+    );
+  }, [difficulty, topic, query]);
 
   const chip = (active: boolean) =>
     `rounded-md border px-3 py-1.5 text-xs font-medium transition-all duration-100 ${
@@ -110,6 +111,27 @@ export default function Home({ onSelectExercise }: HomeProps) {
         </section>
       )}
 
+      {/* Search */}
+      <div className="mb-5 relative">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search exercises…"
+          className="w-full rounded-lg border border-border-tertiary bg-background-secondary px-4 py-2 text-sm text-content-primary placeholder:text-content-tertiary focus:border-accent focus:outline-none"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-content-tertiary hover:text-content-secondary"
+            aria-label="Clear search"
+          >
+            ×
+          </button>
+        )}
+      </div>
+
       {/* Filters */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="mr-1 text-xs font-medium uppercase tracking-widest text-content-tertiary">
@@ -142,7 +164,7 @@ export default function Home({ onSelectExercise }: HomeProps) {
       {/* Exercise grid */}
       {filtered.length === 0 ? (
         <p className="py-16 text-center text-sm text-content-secondary">
-          No exercises match those filters yet.
+          No exercises match{query ? ` "${query}"` : ' those filters'}.
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 pb-16 sm:grid-cols-2 lg:grid-cols-3">
