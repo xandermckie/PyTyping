@@ -114,6 +114,11 @@ export default function QuizPanel({ exerciseId, code, questions, onComplete }: Q
         <div
           className="h-full bg-accent transition-[width] duration-300 ease-out"
           style={{ width: `${progressPct}%` }}
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progressPct)}
+          aria-label={`Quiz progress, question ${index + 1} of ${questions.length}`}
         />
       </div>
 

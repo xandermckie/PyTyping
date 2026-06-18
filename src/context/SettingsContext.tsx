@@ -7,7 +7,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { loadValidated, saveJSON } from '../lib/storage';
-import { applyPalette, resolvePalette } from '../lib/theme';
+import { applySettingsToDocument } from '../lib/apply-document-settings';
 import {
   DEFAULT_SETTINGS,
   SETTINGS_KEY,
@@ -33,12 +33,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Apply palette + typography + caret behavior to <html> on every change.
   useEffect(() => {
-    applyPalette(resolvePalette(settings.themeId, settings.customColors));
-    const root = document.documentElement;
-    root.style.setProperty('--font-code', settings.codeFont);
-    root.style.setProperty('--font-ui', settings.uiFont);
-    root.style.setProperty('--font-code-size', `${settings.codeFontSize}px`);
-    root.setAttribute('data-caret', settings.caretBlink ? 'blink' : 'steady');
+    applySettingsToDocument(settings);
   }, [
     settings.themeId,
     settings.customColors,

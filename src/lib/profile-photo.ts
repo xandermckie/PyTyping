@@ -1,11 +1,15 @@
-/** Profile photo validation and client-side resize for local avatars. */
+/** Profile photo validation, crop export, and client-side resize for local avatars. */
 
 export const AVATAR_PHOTO_MAX_BYTES = 32_000;
 export const SHARE_THUMB_MAX_BYTES = 4_096;
 export const AVATAR_MAX_DIM = 128;
 export const SHARE_THUMB_MAX_DIM = 64;
+export const CROP_VIEWPORT_PX = 280;
+export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 const ALLOWED_PREFIXES = ['data:image/jpeg;base64,', 'data:image/png;base64,', 'data:image/webp;base64,'] as const;
+
+const IMAGE_EXT = /\.(jpe?g|png|gif|webp|bmp|svg|avif|heic|heif|tiff?|ico)$/i;
 
 function base64DecodedSize(base64: string): number {
   const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
@@ -31,29 +35,23 @@ export function validateAvatarPhotoDataUrl(url: unknown, maxBytes = AVATAR_PHOTO
 
 export type ResizeImageResult = { ok: true; dataUrl: string } | { ok: false; error: string };
 
-function loadImageFromFile(file: File): Promise<HTMLImageElement> {
+/** True when the file looks like an image (MIME or extension). */
+export function isLikelyImageFile(file: File): boolean {
+  if (file.type.startsWith('image/')) return true;
+  return IMAGE_EXT.test(file.name);
+}
+
+function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
     const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Could not load image.'));
-    };
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Could not load image.'));
     img.src = url;
   });
 }
 
 function loadImageFromDataUrl(dataUrl: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('Could not load image.'));
-    img.src = dataUrl;
-  });
+  return loadImageFromUrl(dataUrl);
 }
 
 function canvasToJpeg(canvas: HTMLCanvasElement, quality: number): string {
@@ -87,22 +85,131 @@ async function encodeWithQuality(
   return { ok: false, error: 'Image is too large even after compression.' };
 }
 
-/** Resize an uploaded image file to a JPEG data URL within size limits. */
+export interface CropTransform {
+  /** Fit-to-cover scale before user zoom. */
+  baseScale: number;
+  /** User zoom multiplier (1 = fit). */
+  zoom: number;
+  /** Top-left of the image in viewport px. */
+  offsetX: number;
+  offsetY: number;
+}
+
+export function computeInitialCropTransform(imgWidth: number, imgHeight: number): CropTransform {
+  const baseScale = Math.max(CROP_VIEWPORT_PX / imgWidth, CROP_VIEWPORT_PX / imgHeight);
+  const w = imgWidth * baseScale;
+  const h = imgHeight * baseScale;
+  return {
+    baseScale,
+    zoom: 1,
+    offsetX: (CROP_VIEWPORT_PX - w) / 2,
+    offsetY: (CROP_VIEWPORT_PX - h) / 2,
+  };
+}
+
+export function displayScale(transform: CropTransform): number {
+  return transform.baseScale * transform.zoom;
+}
+
+export function displaySize(
+  imgWidth: number,
+  imgHeight: number,
+  transform: CropTransform,
+): { width: number; height: number } {
+  const scale = displayScale(transform);
+  return { width: imgWidth * scale, height: imgHeight * scale };
+}
+
+/** Clamp pan so the image always covers the square viewport. */
+export function clampCropPan(
+  imgWidth: number,
+  imgHeight: number,
+  transform: CropTransform,
+): CropTransform {
+  const { width, height } = displaySize(imgWidth, imgHeight, transform);
+  const minX = CROP_VIEWPORT_PX - width;
+  const minY = CROP_VIEWPORT_PX - height;
+  return {
+    ...transform,
+    offsetX: Math.min(0, Math.max(minX, transform.offsetX)),
+    offsetY: Math.min(0, Math.max(minY, transform.offsetY)),
+  };
+}
+
+export function encodeCroppedAvatar(
+  img: HTMLImageElement,
+  transform: CropTransform,
+  options: { maxDim?: number; maxBytes?: number } = {},
+): ResizeImageResult {
+  const maxDim = options.maxDim ?? AVATAR_MAX_DIM;
+  const maxBytes = options.maxBytes ?? AVATAR_PHOTO_MAX_BYTES;
+  const scale = displayScale(transform);
+  const sw = CROP_VIEWPORT_PX / scale;
+  const sh = CROP_VIEWPORT_PX / scale;
+  let sx = -transform.offsetX / scale;
+  let sy = -transform.offsetY / scale;
+
+  sx = Math.max(0, Math.min(sx, img.width - sw));
+  sy = Math.max(0, Math.min(sy, img.height - sh));
+  const cropW = Math.min(sw, img.width - sx);
+  const cropH = Math.min(sh, img.height - sy);
+  const side = Math.min(cropW, cropH);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = maxDim;
+  canvas.height = maxDim;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return { ok: false, error: 'Canvas not available.' };
+  ctx.drawImage(img, sx, sy, side, side, 0, 0, maxDim, maxDim);
+
+  for (const quality of [0.85, 0.7, 0.55, 0.4]) {
+    const dataUrl = canvasToJpeg(canvas, quality);
+    const validated = validateAvatarPhotoDataUrl(dataUrl, maxBytes);
+    if (validated) return { ok: true, dataUrl: validated };
+  }
+  return { ok: false, error: 'Could not compress cropped photo enough to save.' };
+}
+
+export type LoadImageFileResult =
+  | { ok: true; img: HTMLImageElement; objectUrl: string }
+  | { ok: false; error: string };
+
+/** Load any common image file for cropping (no size cap beyond browser memory). */
+export async function loadImageFileForCrop(file: File): Promise<LoadImageFileResult> {
+  if (!isLikelyImageFile(file)) {
+    return { ok: false, error: 'Please choose an image file.' };
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return { ok: false, error: 'Image file is too large (max 100 MB).' };
+  }
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await loadImageFromUrl(objectUrl);
+    if (img.width < 1 || img.height < 1) {
+      URL.revokeObjectURL(objectUrl);
+      return { ok: false, error: 'That image has no usable dimensions.' };
+    }
+    return { ok: true, img, objectUrl };
+  } catch {
+    URL.revokeObjectURL(objectUrl);
+    return {
+      ok: false,
+      error:
+        'Your browser could not open this image. Try exporting as JPEG or PNG (some HEIC/TIFF files need conversion).',
+    };
+  }
+}
+
+/** Resize an uploaded image file to a JPEG data URL within size limits (no crop). */
 export async function resizeImageToDataUrl(
   file: File,
   options: { maxDim?: number; maxBytes?: number } = {},
 ): Promise<ResizeImageResult> {
-  const maxDim = options.maxDim ?? AVATAR_MAX_DIM;
-  const maxBytes = options.maxBytes ?? AVATAR_PHOTO_MAX_BYTES;
-  if (!file.type.startsWith('image/')) {
-    return { ok: false, error: 'Please choose a JPEG, PNG, or WebP image.' };
-  }
-  if (file.size > 5 * 1024 * 1024) {
-    return { ok: false, error: 'Image file is too large (max 5 MB before resize).' };
-  }
+  const loaded = await loadImageFileForCrop(file);
+  if (!loaded.ok) return { ok: false, error: loaded.error };
+  URL.revokeObjectURL(loaded.objectUrl);
   try {
-    const img = await loadImageFromFile(file);
-    return encodeWithQuality(img, maxDim, maxBytes);
+    return encodeWithQuality(loaded.img, options.maxDim ?? AVATAR_MAX_DIM, options.maxBytes ?? AVATAR_PHOTO_MAX_BYTES);
   } catch {
     return { ok: false, error: 'Could not process that image.' };
   }

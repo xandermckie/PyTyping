@@ -3,6 +3,7 @@ import Logo from './Logo';
 import {
   APP_VERSION,
   AUTHOR_NAME,
+  BUY_ME_A_COFFEE_URL,
   GITHUB_BUG_REPORT_URL,
   GITHUB_URL,
   MONKEYTYPE_URL,
@@ -112,11 +113,19 @@ export default function AboutLegal() {
         </Section>
 
         <Section title="Accessibility">
-          PyTyping aims to meet WCAG 2.1 Level AA. The typing caret and challenge-mode character
-          hiding are primarily visual; screen-reader users can use Guided mode for full code visibility.
-          If you encounter a barrier, please{' '}
+          PyTyping is designed to meet WCAG 2.1 Level AA. Keyboard navigation, visible focus, skip
+          links, screen-reader announcements for typing feedback, modal focus trapping, and reduced-motion
+          support are built in. Use Guided mode for full code visibility with assistive technology;
+          Challenge mode provides a structure hint via screen readers but hides untyped characters
+          visually. If you encounter a barrier, please{' '}
           <ExtLink href={GITHUB_BUG_REPORT_URL}>report it on GitHub</ExtLink> and mention
           &quot;accessibility&quot; in the issue.
+        </Section>
+
+        <Section title="Support">
+          PyTyping is free and open source. If you enjoy it, you can optionally{' '}
+          <ExtLink href={BUY_ME_A_COFFEE_URL}>buy me a coffee</ExtLink> — there is no paywall and
+          support is never required.
         </Section>
 
         <Section title="Disclaimer">

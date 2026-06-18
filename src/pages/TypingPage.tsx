@@ -188,6 +188,8 @@ export default function TypingPage({
             onClick={() => {
               setTypingMode((mode) => (mode === 'guided' ? 'challenge' : 'guided'));
             }}
+            aria-pressed={typingMode === 'challenge'}
+            aria-label={`Exercise mode: ${typingMode === 'guided' ? 'Guided' : 'Challenge'}. Click to switch.`}
             className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
           >
             <span className="sm:hidden">{typingMode === 'guided' ? 'Guided' : 'Challenge'}</span>
@@ -227,6 +229,7 @@ export default function TypingPage({
             key={`${exercise.id}:${restartKey}`}
             code={exercise.code}
             obscurePending={typingMode === 'challenge'}
+            accessibleCodeHint={typingMode === 'challenge' ? challengePrompt : undefined}
             recordReplay={settings.recordReplays}
             onReplayReady={handleReplayReady}
             onComplete={handleTypingComplete}

@@ -60,6 +60,13 @@ export default function GettingStarted() {
         <ul className="space-y-2 text-sm text-content-secondary list-disc list-inside">
           <li>Press <span className="font-mono text-xs text-content-primary">Tab</span> at the start of an indented line instead of typing each space individually.</li>
           <li>After pressing <span className="font-mono text-xs text-content-primary">Enter</span>, indentation is inserted automatically — you jump straight to the first non-space character.</li>
+          <li>
+            Typing <span className="font-mono text-xs text-content-primary">(</span>,{' '}
+            <span className="font-mono text-xs text-content-primary">[</span>,{' '}
+            <span className="font-mono text-xs text-content-primary">{'{'}</span>, or quotes before an empty pair
+            places the caret between them (like VS Code). Type the closing character to continue; backspace between an
+            empty pair removes the opener.
+          </li>
           <li>A wrong character turns red and blocks the caret. Fix it with <span className="font-mono text-xs text-content-primary">Backspace</span> before moving on.</li>
           <li>Your session stays in Zen mode while typing — the header and footer fade to keep you focused.</li>
           <li>Create a free local account to persist your progress and streak across sessions.</li>

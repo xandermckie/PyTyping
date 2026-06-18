@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 export interface Command {
   id: string;
@@ -25,6 +26,14 @@ export default function CommandPalette({ open, commands, onClose }: CommandPalet
   const [active, setActive] = useState(0);
   const [cmdError, setCmdError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useModalA11y({
+    open,
+    onClose,
+    containerRef: dialogRef,
+    initialFocusRef: inputRef,
+  });
 
   // Reset query/selection and focus the field each time it opens.
   useEffect(() => {
@@ -94,6 +103,7 @@ export default function CommandPalette({ open, commands, onClose }: CommandPalet
       onMouseDown={onClose}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Command line"
@@ -107,9 +117,16 @@ export default function CommandPalette({ open, commands, onClose }: CommandPalet
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Type a command…"
           aria-label="Command search"
+          aria-controls="command-listbox"
+          aria-activedescendant={
+            filtered.length > 0 ? `cmd-option-${filtered[active]?.id}` : undefined
+          }
+          aria-autocomplete="list"
+          role="combobox"
+          aria-expanded="true"
           className="w-full border-b border-border-tertiary bg-transparent px-4 py-3 text-sm text-content-primary outline-none"
         />
-        <ul role="listbox" aria-label="Commands" className="max-h-72 overflow-y-auto py-1">
+        <ul id="command-listbox" role="listbox" aria-label="Commands" className="max-h-72 overflow-y-auto py-1">
           {cmdError && (
             <li role="presentation" className="px-4 py-2 text-sm text-error">
               {cmdError}

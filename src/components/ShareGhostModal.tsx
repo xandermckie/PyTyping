@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { buildFriendShareBundle, downloadFriendShareJson } from '../lib/friend-share';
 import { encodeFriendCode } from '../lib/friend-codes';
 import { shrinkPhotoForShare } from '../lib/profile-photo';
+import { useModalA11y } from '../hooks/useModalA11y';
 import type { TypingReplay } from '../types/replay';
 
 interface ShareGhostModalProps {
@@ -24,6 +25,10 @@ export default function ShareGhostModal({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLButtonElement>(null);
+
+  useModalA11y({ open, onClose, containerRef: dialogRef, initialFocusRef: copyRef });
 
   const generate = useCallback(async () => {
     setLoading(true);
@@ -54,15 +59,6 @@ export default function ShareGhostModal({
     if (open) void generate();
   }, [open, generate]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-
   if (!open) return null;
 
   const handleCopy = async () => {
@@ -91,6 +87,7 @@ export default function ShareGhostModal({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="share-ghost-title"
@@ -129,6 +126,7 @@ export default function ShareGhostModal({
 
         <div className="mt-4 flex flex-wrap gap-2">
           <button
+            ref={copyRef}
             type="button"
             onClick={() => void handleCopy()}
             disabled={!code || loading}

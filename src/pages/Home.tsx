@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import ExerciseCard from '../components/ExerciseCard';
 import Logo from '../components/Logo';
+import type { AppView } from '../components/AppHeader';
 import { EXERCISES, DIFFICULTIES, allTopics } from '../lib/exercises';
 import { getHistory, getProgress } from '../lib/progress';
 import { useSession } from '../context/SessionContext';
@@ -9,11 +10,12 @@ import { getAchievements, getGoalSummary, getReviewQueue, getStreakSummary } fro
 
 interface HomeProps {
   onSelectExercise: (id: string) => void;
+  onNavigate?: (view: AppView) => void;
 }
 
 type DifficultyFilter = Difficulty | 'all';
 
-export default function Home({ onSelectExercise }: HomeProps) {
+export default function Home({ onSelectExercise, onNavigate }: HomeProps) {
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all');
   const [topic, setTopic] = useState<string>('all');
   const [query, setQuery] = useState('');
@@ -62,11 +64,13 @@ export default function Home({ onSelectExercise }: HomeProps) {
         {/* Meta row */}
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-content-tertiary">
           <span>{EXERCISES.length} exercises</span>
-          <span aria-hidden="true" className="text-border-secondary">·</span>
+          <span aria-hidden="true" className="text-border-secondary">
+            ·
+          </span>
           <span>{topics.length} topics</span>
-          <span aria-hidden="true" className="text-border-secondary">·</span>
-          <span>Ghost race &amp; Pomodoro in the nav</span>
-          <span aria-hidden="true" className="text-border-secondary">·</span>
+          <span aria-hidden="true" className="text-border-secondary">
+            ·
+          </span>
           <span>
             press{' '}
             <kbd className="rounded border border-border-tertiary bg-background-secondary px-1.5 py-0.5 font-mono text-content-secondary">
@@ -75,6 +79,22 @@ export default function Home({ onSelectExercise }: HomeProps) {
             for commands
           </span>
         </div>
+
+        {onNavigate && (
+          <div className="mt-6">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-content-tertiary">
+              What&apos;s new in v1.0
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <FeatureChip label="Ghost race & ranks" onClick={() => onNavigate('race')} />
+              <FeatureChip label="Friends & codes" onClick={() => onNavigate('friends')} />
+              <FeatureChip label="Profile photos" onClick={() => onNavigate('settings')} />
+              <FeatureChip label="Leaderboard" onClick={() => onNavigate('leaderboard')} />
+              <FeatureChip label="Pomodoro timer" onClick={() => onNavigate('getting-started')} />
+              <FeatureChip label="IDE-style typing" onClick={() => onNavigate('getting-started')} />
+            </div>
+          </div>
+        )}
 
         {/* Stat pills */}
         <div className="mt-6 flex flex-wrap gap-2">
@@ -214,9 +234,19 @@ function StatPill({
       }`}
     >
       <span className="text-content-tertiary">{label}</span>
-      <span className={`font-semibold ${highlight ? 'text-accent' : 'text-content-primary'}`}>
-        {value}
-      </span>
+      <span className={`font-semibold ${highlight ? 'text-accent' : 'text-content-primary'}`}>{value}</span>
     </span>
+  );
+}
+
+function FeatureChip({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-full border border-accent/30 bg-[var(--color-accent-subtle)] px-3 py-1 text-xs font-medium text-accent transition-colors hover:border-accent hover:bg-background-secondary"
+    >
+      {label}
+    </button>
   );
 }

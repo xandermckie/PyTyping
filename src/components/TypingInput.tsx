@@ -1,9 +1,12 @@
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent, MouseEvent } from 'react';
+import { useModalA11y } from '../hooks/useModalA11y';
+import { describeTypingChar } from '../lib/a11y-text';
 import { tokenizeToCells } from '../lib/highlight';
 import type { CharCell } from '../lib/highlight';
 import { playErrorBlip } from '../lib/sound';
-import { getAutoCloseCount } from '../lib/delimiter-pairing';
+import { detectVirtualPair } from '../lib/delimiter-pairing';
+import type { VirtualPairState } from '../lib/delimiter-pairing';
 import { computeAccuracy, applyTabToCounters, undoCorrectKeystroke } from '../lib/typing-stats';
 import { useSettings } from '../context/SettingsContext';
 import type { TypingStats } from '../types/exercise';
@@ -15,6 +18,8 @@ interface TypingInputProps {
   code: string;
   /** Hide not-yet-typed characters (used by challenge mode). */
   obscurePending?: boolean;
+  /** Screen-reader description of code in challenge mode (structure hint). */
+  accessibleCodeHint?: string;
   /** Record cursor-over-time events for ghost replays. */
   recordReplay?: boolean;
   /** Opponent replay for ghost race mode. */
@@ -143,6 +148,7 @@ const Line = memo(function Line({
 export default function TypingInput({
   code,
   obscurePending = false,
+  accessibleCodeHint,
   recordReplay = false,
   ghostReplay = null,
   onGhostFinished,
@@ -155,6 +161,10 @@ export default function TypingInput({
 }: TypingInputProps) {
   const { settings } = useSettings();
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const pauseDialogRef = useRef<HTMLDivElement>(null);
+  const resumeButtonRef = useRef<HTMLButtonElement>(null);
+  const codeDescId = useId();
+  const [a11yAnnouncement, setA11yAnnouncement] = useState('');
 
   // --- Tokenized characters + line grouping (recomputed only when code changes).
   const cells = useMemo(() => tokenizeToCells(code), [code]);
@@ -179,8 +189,8 @@ export default function TypingInput({
   //     native input handler); a tick counter forces re-render for the view.
   const cursorRef = useRef(0); // index of the next expected character
   const errorRef = useRef(-1); // index currently mistyped, or -1
-  /** Index of an auto-inserted closer, or -1 when none pending undo. */
-  const autoClosedAtRef = useRef(-1);
+  /** Virtual delimiter pair (VS Code-style auto-close). */
+  const virtualPairRef = useRef<VirtualPairState | null>(null);
   const statsRef = useRef({ keystrokes: 0, correct: 0, errors: 0, startedAt: 0, finishedAt: 0 });
   const replayEventsRef = useRef<ReplayEvent[]>([]);
   const recordReplayRef = useRef(recordReplay);
@@ -198,6 +208,10 @@ export default function TypingInput({
   const [showQuit, setShowQuit] = useState(false);
   const [display, setDisplay] = useState({ wpm: 0, accuracy: 100, errors: 0 });
   const [ghostCursor, setGhostCursor] = useState(0);
+
+  const announceTyping = useCallback((message: string) => {
+    setA11yAnnouncement(message);
+  }, []);
 
   const recordCursorEvent = useCallback(() => {
     if (!recordReplayRef.current) return;
@@ -259,20 +273,31 @@ export default function TypingInput({
       cursorRef.current = i + 1;
       recordCursorEvent();
       errorRef.current = -1;
-      autoClosedAtRef.current = -1;
-      if (getAutoCloseCount(cells, cursorRef.current) === 1) {
-        stats.correct += 1;
-        autoClosedAtRef.current = cursorRef.current;
-        cursorRef.current += 1;
-        recordCursorEvent();
+      const nextChar = cells[cursorRef.current]?.char;
+      if (nextChar !== undefined) {
+        announceTyping(`Correct. Next character: ${describeTypingChar(nextChar)}.`);
       }
+
+      const vp = virtualPairRef.current;
+      if (vp && i === vp.closerIndex) {
+        virtualPairRef.current = { ...vp, closerTyped: true };
+      } else {
+        virtualPairRef.current = null;
+        const pair = detectVirtualPair(cells, cursorRef.current);
+        if (pair) {
+          virtualPairRef.current = { ...pair, closerTyped: false };
+        }
+      }
+
       if (cursorRef.current === total) finishRef.current();
     } else {
       stats.errors += 1;
       errorRef.current = i;
+      virtualPairRef.current = null;
+      announceTyping(`Incorrect. Expected ${describeTypingChar(cells[i].char)}.`);
       if (cfgRef.current.sound) playErrorBlip();
     }
-  }, [cells, total, recordCursorEvent]);
+  }, [cells, total, recordCursorEvent, announceTyping]);
 
   /* --- After Enter: auto-advance past the leading spaces on the new line (IDE-style auto-indent). */
   const handleEnter = useCallback(() => {
@@ -308,9 +333,10 @@ export default function TypingInput({
       if (cursorRef.current === total) finishRef.current();
     } else {
       errorRef.current = i;
+      announceTyping(`Incorrect. Expected space for tab indentation.`);
       if (cfgRef.current.sound) playErrorBlip();
     }
-  }, [cells, total, recordCursorEvent]);
+  }, [cells, total, recordCursorEvent, announceTyping]);
 
   // Backspace can arrive from both keydown and the native beforeinput event
   // (mobile keyboards). Dedupe presses that fire within the same tick.
@@ -323,14 +349,18 @@ export default function TypingInput({
       errorRef.current = -1; // first clear an outstanding mistake
     } else if (cursorRef.current > 0) {
       const pos = cursorRef.current;
-      if (autoClosedAtRef.current === pos - 1) {
-        cursorRef.current -= 2;
-        autoClosedAtRef.current = -1;
+      const vp = virtualPairRef.current;
+      if (vp && !vp.closerTyped && pos === vp.closerIndex) {
+        cursorRef.current = vp.openerIndex;
+        virtualPairRef.current = null;
         undoCorrectKeystroke(statsRef.current);
+      } else if (vp && vp.closerTyped && pos === vp.closerIndex + 1) {
+        cursorRef.current = vp.closerIndex;
+        virtualPairRef.current = { ...vp, closerTyped: false };
         undoCorrectKeystroke(statsRef.current);
       } else {
         cursorRef.current -= 1;
-        autoClosedAtRef.current = -1;
+        virtualPairRef.current = null;
         undoCorrectKeystroke(statsRef.current);
       }
     }
@@ -461,6 +491,24 @@ export default function TypingInput({
     onRestart?.();
   }, [onRestart]);
 
+  useModalA11y({
+    open: showQuit,
+    onClose: resumeTyping,
+    onEscape: resumeTyping,
+    containerRef: pauseDialogRef,
+    initialFocusRef: resumeButtonRef,
+  });
+
+  const codeDescription = useMemo(() => {
+    if (obscurePending) {
+      if (accessibleCodeHint) {
+        return `Challenge mode structure hint: ${accessibleCodeHint}. Switch to Guided mode for the full code.`;
+      }
+      return 'Challenge mode hides untyped characters. Switch to Guided mode for full code visibility.';
+    }
+    return `Code to type: ${code}`;
+  }, [accessibleCodeHint, code, obscurePending]);
+
   const handleFocus = useCallback(() => {
     setFocused(true);
     onFocusChange?.(true);
@@ -539,6 +587,7 @@ export default function TypingInput({
           onBlur={handleBlur}
           disabled={done}
           aria-label="Type the displayed Python code"
+          aria-describedby={codeDescId}
           aria-autocomplete="none"
           autoCapitalize="off"
           autoCorrect="off"
@@ -553,6 +602,10 @@ export default function TypingInput({
           style={{ fontSize: 'var(--font-code-size)' }}
         />
 
+        <div id={codeDescId} className="sr-only">
+          {codeDescription}
+        </div>
+
         {/* Focus hint when the field isn't focused (keyboard-friendly: we never
             trap focus; the user re-focuses by click or Ctrl/⌘+L). */}
         {!focused && !done && (
@@ -565,16 +618,17 @@ export default function TypingInput({
       </div>
 
       {/* On-screen control keys for mobile (no Tab/Esc on most soft keyboards). */}
-      <div className="mt-3 flex gap-2 pb-safe sm:hidden">
+      <div className="mt-3 flex gap-2 pb-safe sm:hidden" role="group" aria-label="On-screen typing keys">
         {[
-          { label: 'Tab', fn: handleTab },
-          { label: 'Enter', fn: handleEnter },
-          { label: '⌫', fn: handleBackspace },
-          { label: 'Esc', fn: () => setShowQuit(true) },
+          { label: 'Tab', ariaLabel: 'Insert tab indentation', fn: handleTab },
+          { label: 'Enter', ariaLabel: 'Insert line break', fn: handleEnter },
+          { label: '⌫', ariaLabel: 'Backspace', fn: handleBackspace },
+          { label: 'Esc', ariaLabel: 'Open pause menu', fn: () => setShowQuit(true) },
         ].map((k) => (
           <button
             key={k.label}
             type="button"
+            aria-label={k.ariaLabel}
             onMouseDown={holdFocus(k.fn)}
             className="flex-1 rounded-md border border-border-tertiary bg-background-secondary py-2 text-sm text-content-secondary active:bg-background-tertiary"
           >
@@ -584,22 +638,22 @@ export default function TypingInput({
       </div>
 
       {/* Live stats */}
-      <div className="mt-5 flex items-center gap-6 text-sm">
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-xl font-semibold tabular-nums text-content-primary">{display.accuracy}%</span>
-          <span className="text-xs text-content-tertiary">acc</span>
+      <div className="mt-5 flex items-center gap-6 text-sm" role="group" aria-label="Typing statistics">
+        <div className="flex items-baseline gap-1.5" aria-label={`Accuracy ${display.accuracy} percent`}>
+          <span className="text-xl font-semibold tabular-nums text-content-primary" aria-hidden="true">{display.accuracy}%</span>
+          <span className="text-xs text-content-secondary">acc</span>
         </div>
         {settings.liveWpm && (
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl font-semibold tabular-nums text-content-primary">{display.wpm}</span>
-            <span className="text-xs text-content-tertiary">wpm</span>
+          <div className="flex items-baseline gap-1.5" aria-label={`Speed ${display.wpm} words per minute`}>
+            <span className="text-xl font-semibold tabular-nums text-content-primary" aria-hidden="true">{display.wpm}</span>
+            <span className="text-xs text-content-secondary">wpm</span>
           </div>
         )}
-        <div className="flex items-baseline gap-1.5">
-          <span className={`text-xl font-semibold tabular-nums ${display.errors > 0 ? 'text-error' : 'text-content-primary'}`}>
+        <div className="flex items-baseline gap-1.5" aria-label={`${display.errors} errors`}>
+          <span className={`text-xl font-semibold tabular-nums ${display.errors > 0 ? 'text-error' : 'text-content-primary'}`} aria-hidden="true">
             {display.errors}
           </span>
-          <span className="text-xs text-content-tertiary">err</span>
+          <span className="text-xs text-content-secondary">err</span>
         </div>
         <div className="ml-auto hidden text-xs text-content-tertiary sm:block">
           esc · menu &nbsp;·&nbsp; tab = {settings.tabSize} sp
@@ -608,7 +662,8 @@ export default function TypingInput({
 
       {/* Screen-reader announcement; the visible results screen lives in the
           parent (TypingPage) once onComplete fires. */}
-      <div aria-live="polite" className="sr-only">
+      <div aria-live="polite" aria-atomic="true" className="sr-only">
+        {a11yAnnouncement}
         {done && `Snippet complete — ${display.accuracy}% accuracy.`}
         {ghostReplay && !done && ghostCursor >= total && 'Ghost finished the snippet.'}
         {ghostReplay && !done && ghostCursor < total && ghostCursor >= cursor && ghostCursor > 0 && 'Ghost is ahead.'}
@@ -618,23 +673,24 @@ export default function TypingInput({
       {/* Esc menu — keyboard accessible, focus moves to it. */}
       {showQuit && (
         <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Exercise menu"
+          role="presentation"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') resumeTyping();
-          }}
         >
-          <div className="w-full max-w-sm rounded-lg border border-border-secondary bg-background-primary p-6">
-            <h2 className="text-lg font-medium text-content-primary">Paused</h2>
+          <div
+            ref={pauseDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pause-menu-title"
+            className="w-full max-w-sm rounded-lg border border-border-secondary bg-background-primary p-6"
+          >
+            <h2 id="pause-menu-title" className="text-lg font-medium text-content-primary">Paused</h2>
             <p className="mt-2 text-sm text-content-secondary">
               Restart this snippet from the top, or exit. Unsaved snippet progress is lost on either.
             </p>
             <div className="mt-6 flex flex-col gap-2">
               <button
+                ref={resumeButtonRef}
                 type="button"
-                autoFocus
                 onClick={resumeTyping}
                 className="rounded-md border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-background-secondary"
               >

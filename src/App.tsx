@@ -101,8 +101,8 @@ function AppShell() {
       run: () => update({ themeId: option.id }),
     }));
     const cmds: Command[] = [
-      { id: 'nav-home', label: 'Go to Exercises', hint: 'navigate', run: () => setView('home') },
       { id: 'nav-getting-started', label: 'Getting Started', hint: 'navigate', run: () => setView('getting-started') },
+      { id: 'nav-home', label: 'Go to Exercises', hint: 'navigate', run: () => setView('home') },
       { id: 'nav-guide', label: 'Go to Python guide', hint: 'navigate', run: () => setView('guide') },
       { id: 'nav-leaderboard', label: 'Go to Leaderboard', hint: 'navigate', run: () => setView('leaderboard') },
       { id: 'nav-race', label: 'Go to Race', hint: 'navigate', run: () => setView('race') },
@@ -154,7 +154,7 @@ function AppShell() {
       />
 
       <main id="main-content" tabIndex={-1} className="flex-1 px-4 py-8 outline-none sm:px-6">
-        {view === 'home' && <Home onSelectExercise={startExercise} />}
+        {view === 'home' && <Home onSelectExercise={startExercise} onNavigate={setView} />}
         <Suspense fallback={<PageFallback />}>
           {view === 'guide' && <PythonGuide />}
           {view === 'contribute' && <Contribute />}

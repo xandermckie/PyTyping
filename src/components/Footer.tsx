@@ -1,4 +1,4 @@
-import { APP_VERSION, AUTHOR_NAME, GITHUB_URL, MONKEYTYPE_URL } from '../lib/links';
+import { APP_VERSION, AUTHOR_NAME, BUY_ME_A_COFFEE_URL, GITHUB_URL, MONKEYTYPE_URL } from '../lib/links';
 
 interface FooterProps {
   /** Faded out (and click-blocked) during focused typing — zen mode. */
@@ -72,6 +72,19 @@ export default function Footer({ hidden, onShowLegal }: FooterProps) {
             About & legal
           </button>
         </div>
+
+        <p className="text-content-secondary">
+          Enjoying PyTyping?{' '}
+          <a
+            href={BUY_ME_A_COFFEE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-content-secondary underline-offset-2 hover:text-accent hover:underline"
+          >
+            Buy me a coffee
+          </a>{' '}
+          — totally optional, but appreciated if you want to support development.
+        </p>
       </div>
     </footer>
   );

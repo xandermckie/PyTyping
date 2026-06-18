@@ -1,6 +1,46 @@
+import { buildSync } from 'esbuild';
 import { defineConfig } from 'vitest/config';
 import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+
+/** Bundle theme-init.ts to a blocking IIFE served at /theme-init.js. */
+function bundleThemeInit(): string {
+  return buildSync({
+    entryPoints: ['src/theme-init.ts'],
+    bundle: true,
+    write: false,
+    format: 'iife',
+    platform: 'browser',
+    target: 'es2020',
+    minify: true,
+    define: { 'import.meta.env.DEV': 'false' },
+  }).outputFiles[0].text;
+}
+
+function themeInitPlugin(): Plugin {
+  return {
+    name: 'pytyping-theme-init',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req as { url?: string }).url?.split('?')[0];
+        if (path !== '/theme-init.js') {
+          next();
+          return;
+        }
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.end(bundleThemeInit());
+      });
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'theme-init.js',
+        source: bundleThemeInit(),
+      });
+    },
+  };
+}
 
 /**
  * Inject a Content-Security-Policy meta tag into the built index.html.
@@ -44,7 +84,7 @@ export default defineConfig({
   // If you ever move this to a project repo served at /<repo>/, set the base
   // to '/<repo>/' instead.
   base: '/',
-  plugins: [react(), cspPlugin()],
+  plugins: [themeInitPlugin(), react(), cspPlugin()],
   test: {
     environment: 'node',
     include: ['src/**/__tests__/**/*.test.ts'],

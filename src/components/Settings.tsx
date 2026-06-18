@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
 import Avatar from './Avatar';
+import ProfilePhotoCropModal from './ProfilePhotoCropModal';
 import { useSettings } from '../context/SettingsContext';
 import { CODE_FONTS, UI_FONTS } from '../lib/settings';
 import { useSession } from '../context/SessionContext';
 import { exportBackup, importBackup, BACKUP_MAX_BYTES } from '../lib/backup';
-import { resizeImageToDataUrl } from '../lib/profile-photo';
+import { loadImageFileForCrop } from '../lib/profile-photo';
 import { THEME_OPTIONS } from '../lib/theme';
 import type { BaseColors } from '../lib/theme';
 
@@ -69,6 +70,12 @@ const selectClass =
 const btnClass =
   'rounded-md border border-border-tertiary px-4 py-2 text-sm text-content-secondary transition-colors hover:bg-background-secondary';
 
+interface CropSession {
+  objectUrl: string;
+  imgWidth: number;
+  imgHeight: number;
+}
+
 export default function Settings({ onShowLogin, onManageFriends }: SettingsProps) {
   const { settings, update, reset, persistError } = useSettings();
   const { isGuest, account, displayName, avatarColor, avatarPhoto, setAvatarPhoto, logout, removeAccount } =
@@ -79,6 +86,12 @@ export default function Settings({ onShowLogin, onManageFriends }: SettingsProps
   const [importError, setImportError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [cropSession, setCropSession] = useState<CropSession | null>(null);
+
+  const closeCrop = () => {
+    if (cropSession) URL.revokeObjectURL(cropSession.objectUrl);
+    setCropSession(null);
+  };
 
   const setColor = (key: keyof BaseColors, value: string) => {
     update({ themeId: 'custom', customColors: { ...settings.customColors, [key]: value } });
@@ -127,12 +140,22 @@ export default function Settings({ onShowLogin, onManageFriends }: SettingsProps
     e.target.value = '';
     if (!file) return;
     setPhotoError(null);
-    const result = await resizeImageToDataUrl(file);
+    closeCrop();
+    const result = await loadImageFileForCrop(file);
     if (!result.ok) {
       setPhotoError(result.error);
       return;
     }
-    if (!setAvatarPhoto(result.dataUrl)) {
+    setCropSession({
+      objectUrl: result.objectUrl,
+      imgWidth: result.img.width,
+      imgHeight: result.img.height,
+    });
+  };
+
+  const onCropSave = (dataUrl: string) => {
+    closeCrop();
+    if (!setAvatarPhoto(dataUrl)) {
       setPhotoError('Could not save profile photo. Storage may be full.');
     }
   };
@@ -225,18 +248,30 @@ export default function Settings({ onShowLogin, onManageFriends }: SettingsProps
               <input
                 ref={photoRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/*"
                 onChange={onPhotoFile}
                 className="hidden"
                 aria-hidden="true"
               />
             </div>
             <p className="mt-3 text-xs text-content-tertiary">
-              Stored locally and included in backup exports. Shown when you share friend codes.
+              Any image format your browser can open (JPEG, PNG, GIF, WebP, and more). Drag and crop before
+              saving. Stored locally and included in backup exports.
             </p>
             {photoError && <p className="mt-2 text-sm text-error">{photoError}</p>}
           </div>
         </section>
+      )}
+
+      {cropSession && (
+        <ProfilePhotoCropModal
+          open
+          imageUrl={cropSession.objectUrl}
+          imgWidth={cropSession.imgWidth}
+          imgHeight={cropSession.imgHeight}
+          onClose={closeCrop}
+          onSave={onCropSave}
+        />
       )}
 
       {/* Theme */}

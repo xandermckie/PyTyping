@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef } from 'react';
-import type { KeyboardEvent, ReactNode, RefObject } from 'react';
+import { useId, useRef } from 'react';
+import type { ReactNode, RefObject } from 'react';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface DisclosurePanelProps {
   open: boolean;
@@ -28,39 +29,28 @@ export default function DisclosurePanel({
   ariaLabel,
 }: DisclosurePanelProps) {
   const panelId = useId();
-  const hadFocusRef = useRef(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    hadFocusRef.current = true;
-    const id = requestAnimationFrame(() => initialFocusRef?.current?.focus());
-    return () => cancelAnimationFrame(id);
-  }, [open, initialFocusRef]);
-
-  useEffect(() => {
-    if (open || !hadFocusRef.current) return;
-    returnFocusRef?.current?.focus();
-  }, [open, returnFocusRef]);
+  useModalA11y({
+    open,
+    onClose,
+    containerRef: panelRef,
+    initialFocusRef: initialFocusRef as RefObject<HTMLElement | null> | undefined,
+    restoreFocus: Boolean(returnFocusRef),
+  });
 
   if (!open) return null;
-
-  const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onClose();
-    }
-  };
 
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} aria-hidden="true" />
       <div
+        ref={panelRef}
         id={panelId}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
         className={panelClassName}
-        onKeyDown={onKeyDown}
       >
         {children}
       </div>

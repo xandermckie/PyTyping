@@ -5,70 +5,56 @@
 /*
  * PyTyping design system
  * ----------------------
- * All colors live in CSS variables so themes (light / monokia / custom) swap
- * cleanly. theme.ts writes the active palette onto <html style="..."> at
- * runtime; the values below are the light-theme defaults used for first paint
- * and as a fallback if JS has not run yet.
+ * All colors live in CSS variables so themes swap cleanly. theme-init.js and
+ * SettingsContext write the active palette onto <html> at runtime. Values below
+ * match the default settings (Monokia) for first paint if bootstrap JS fails.
  */
 :root {
+  color-scheme: dark;
   /* Typography (overridable in Settings) */
   --font-code: 'JetBrains Mono', 'Courier New', ui-monospace, monospace;
   --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-code-size: 14px;
 
-  /* Surfaces & text — light "Light" preset */
-  --color-background-primary: #f8f7f5;
-  --color-background-secondary: #efefec;
-  --color-background-tertiary: #e4e3df;
-  --color-text-primary: #2c2c2a;
+  /* Surfaces & text — Monokia preset (DEFAULT_SETTINGS.themeId) */
+  --color-background-primary: #0f0e0d;
+  --color-background-secondary: #1a1917;
+  --color-background-tertiary: #232220;
+  --color-text-primary: #f1f0ed;
   --color-text-secondary: #888780;
-  --color-text-tertiary: #b4b2a9;
+  --color-text-tertiary: #94938e;
 
   /* Intent colors */
-  --color-accent: #1d9e75;
-  --color-accent-subtle: rgba(29, 158, 117, 0.08);
+  --color-accent: #e2b714;
+  --color-accent-subtle: rgba(226, 183, 20, 0.12);
   --color-error: #e24b4a;
-  --color-success: #639922;
-  --color-warning: #c98a1b;
+  --color-success: #88b04b;
+  --color-warning: #e2b714;
 
   /* Borders — 0.5px only */
-  --color-border-primary: rgba(0, 0, 0, 0.4);
-  --color-border-secondary: rgba(0, 0, 0, 0.22);
-  --color-border-tertiary: rgba(0, 0, 0, 0.12);
+  --color-border-primary: rgba(255, 255, 255, 0.32);
+  --color-border-secondary: rgba(255, 255, 255, 0.18);
+  --color-border-tertiary: rgba(255, 255, 255, 0.1);
 
-  /* Syntax palette (light) */
-  --color-syntax-keyword: #9d4edd;
-  --color-syntax-string: #2a9d4a;
-  --color-syntax-comment: #a3a199;
-  --color-syntax-function: #1d6f9e;
-  --color-syntax-builtin: #b5651d;
-  --color-syntax-number: #b5651d;
-  --color-syntax-operator: #5a5954;
-  --color-syntax-punctuation: #6f6e69;
-  --color-syntax-decorator: #c98a1b;
-  --color-syntax-class: #1d6f8e;
+  /* Syntax palette (dark) */
+  --color-syntax-keyword: #c792ea;
+  --color-syntax-string: #9ece6a;
+  --color-syntax-comment: #5f5e5a;
+  --color-syntax-function: #7aa2f7;
+  --color-syntax-builtin: #e0af68;
+  --color-syntax-number: #e0af68;
+  --color-syntax-operator: #89ddff;
+  --color-syntax-punctuation: #a9b1d6;
+  --color-syntax-decorator: #e2b714;
+  --color-syntax-class: #7dcfff;
 
   /* Elevation shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Fallback dark palette for first paint before JS applies the saved theme. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    --color-background-primary: #0f0e0d;
-    --color-background-secondary: #1a1917;
-    --color-background-tertiary: #232220;
-    --color-text-primary: #f1f0ed;
-    --color-text-secondary: #888780;
-    --color-text-tertiary: #5f5e5a;
-    --color-border-primary: rgba(255, 255, 255, 0.32);
-    --color-border-secondary: rgba(255, 255, 255, 0.18);
-    --color-border-tertiary: rgba(255, 255, 255, 0.1);
-    --color-accent-subtle: rgba(29, 158, 117, 0.12);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 html,
@@ -78,10 +64,10 @@ body,
   min-height: 100dvh;
 }
 
-/* Smaller code font on narrow screens — 14px is too small to read on phones */
+/* Smaller code font on narrow screens — 13px minimum for readability (WCAG 1.4.4). */
 @media (max-width: 640px) {
   :root {
-    --font-code-size: 12px;
+    --font-code-size: 13px;
   }
 }
 
