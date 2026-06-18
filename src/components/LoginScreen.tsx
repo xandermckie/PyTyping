@@ -172,7 +172,7 @@ export default function LoginScreen({ onDone, onGuest, onShowLegal }: LoginScree
             </p>
           )}
           <p className="mt-3 text-xs text-content-tertiary">
-            Accounts are stored locally on this device — there is no server. Guest progress is kept
+            Accounts are stored locally on this device. There is no server. Guest progress is kept
             only for this browser session. Use Export backup in Settings to move data between devices.
           </p>
         </div>

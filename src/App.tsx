@@ -79,7 +79,7 @@ function AppShell() {
   }, [view]);
 
   useEffect(() => {
-    document.title = `${PAGE_TITLES[view]} — PyTyping`;
+    document.title = `${PAGE_TITLES[view]} | PyTyping`;
   }, [view]);
 
   useEffect(() => {

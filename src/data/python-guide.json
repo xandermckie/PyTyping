@@ -60,10 +60,10 @@
     "title": "Data structures",
     "summary": "Lists, dicts, tuples, and sets organize multiple values in different ways.",
     "bullets": [
-      "list: ordered, mutable sequence — items = [1, 2, 3]",
-      "dict: key → value mapping — user = {\"name\": \"Ada\"}",
-      "tuple: ordered, immutable sequence — point = (3, 4)",
-      "set: unordered collection of unique values — tags = {\"py\", \"dev\"}",
+      "list: ordered, mutable sequence. Example: items = [1, 2, 3]",
+      "dict: key to value mapping. Example: user = {\"name\": \"Ada\"}",
+      "tuple: ordered, immutable sequence. Example: point = (3, 4)",
+      "set: unordered unique values. Example: tags = {\"py\", \"dev\"}",
       "Index lists and strings with [0]; dict values with [\"key\"]."
     ],
     "examples": [

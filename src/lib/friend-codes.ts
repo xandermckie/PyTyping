@@ -17,7 +17,7 @@ export function encodeFriendCode(bundle: FriendShareBundle): EncodeFriendCodeRes
   if (code.length > FRIEND_CODE_MAX_LENGTH) {
     return {
       ok: false,
-      error: 'Code too long — remove profile photo or share a shorter replay.',
+      error: 'Code too long. Remove the profile photo or share a shorter replay.',
     };
   }
   return { ok: true, code };

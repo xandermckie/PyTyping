@@ -82,8 +82,8 @@ export default function Friends({ onShowLogin }: FriendsProps) {
     <div className="mx-auto w-full max-w-2xl pb-12">
       <h1 className="mb-2 text-lg font-medium text-content-primary">Friends</h1>
       <p className="mb-8 text-sm text-content-secondary">
-        Add offline ghost opponents with friend codes or JSON files. No server — paste a code from a friend
-        or import their export.
+        Add offline ghost opponents with friend codes or JSON files. Paste a code from a friend
+        or import their export. No server involved.
       </p>
 
       {!isGuest && (

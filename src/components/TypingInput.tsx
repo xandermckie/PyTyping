@@ -664,7 +664,7 @@ export default function TypingInput({
           parent (TypingPage) once onComplete fires. */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {a11yAnnouncement}
-        {done && `Snippet complete — ${display.accuracy}% accuracy.`}
+        {done && `Snippet complete. ${display.accuracy}% accuracy.`}
         {ghostReplay && !done && ghostCursor >= total && 'Ghost finished the snippet.'}
         {ghostReplay && !done && ghostCursor < total && ghostCursor >= cursor && ghostCursor > 0 && 'Ghost is ahead.'}
         {ghostReplay && !done && ghostCursor < cursor && 'You are ahead of the ghost.'}

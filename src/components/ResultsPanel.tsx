@@ -92,7 +92,7 @@ export default function ResultsPanel({
           </div>
         ) : (
           <p className="text-sm text-content-secondary">
-            First attempt — a baseline to beat next time.
+            First attempt. Beat this score next time.
           </p>
         )}
       </div>

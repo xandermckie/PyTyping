@@ -68,7 +68,7 @@ export default function Leaderboard() {
       <div>
         <h1 className="text-2xl font-semibold text-content-primary">Leaderboard</h1>
         <p className="mt-1 text-sm text-content-secondary">
-          Local accounts on this device — progress stats and race records.
+          Progress stats and race records for local accounts on this device.
         </p>
       </div>
 
@@ -123,9 +123,9 @@ export default function Leaderboard() {
                     <td className="px-4 py-3 text-right">
                       <RankBadge wpm={row.peakRaceWpm} />
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-content-primary">{row.avgWpm || '—'}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-content-primary">{row.avgWpm || '-'}</td>
                     <td className="px-4 py-3 text-right tabular-nums text-content-primary">
-                      {row.avgAccuracy ? `${row.avgAccuracy}%` : '—'}
+                      {row.avgAccuracy ? `${row.avgAccuracy}%` : '-'}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-content-secondary">{row.completed}</td>
                   </tr>

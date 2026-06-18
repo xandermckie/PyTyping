@@ -4,8 +4,8 @@ export default function GettingStarted() {
       <div>
         <h1 className="text-2xl font-semibold text-content-primary">Getting Started</h1>
         <p className="mt-2 text-sm text-content-secondary">
-          PyTyping is a typing trainer built around real Python code. You type actual snippets, then answer a
-          short quiz, then read the breakdown — learning by doing.
+          PyTyping is built around real Python code. Type a snippet, answer a short quiz, then read the
+          breakdown.
         </p>
       </div>
 
@@ -13,7 +13,7 @@ export default function GettingStarted() {
         <h2 className="text-base font-medium text-content-primary">How a session works</h2>
         <ol className="space-y-2 text-sm text-content-secondary list-decimal list-inside">
           <li>Pick an exercise from the Exercises page (filter by difficulty or topic).</li>
-          <li>Type the code exactly as shown — one character at a time.</li>
+          <li>Type the code exactly as shown, one character at a time.</li>
           <li>See your WPM, accuracy, and error count when you finish.</li>
           <li>Answer the multiple-choice quiz about what you just typed.</li>
           <li>Read the breakdown: key terms, how it works, design patterns.</li>
@@ -47,10 +47,10 @@ export default function GettingStarted() {
         <h2 className="text-base font-medium text-content-primary">Exercise modes</h2>
         <div className="space-y-2 text-sm text-content-secondary">
           <p>
-            <span className="font-medium text-content-primary">Guided</span> — The full code is visible while you type. Good for learning new syntax or patterns.
+            <span className="font-medium text-content-primary">Guided:</span> The full code is visible while you type. Use this when you are learning new syntax.
           </p>
           <p>
-            <span className="font-medium text-content-primary">Challenge</span> — Untyped characters are hidden (shown as bullets). Tests recall, not just motor memory.
+            <span className="font-medium text-content-primary">Challenge:</span> Untyped characters are hidden (shown as bullets). You have to remember what comes next.
           </p>
         </div>
       </section>
@@ -59,7 +59,7 @@ export default function GettingStarted() {
         <h2 className="text-base font-medium text-content-primary">IDE-style typing tips</h2>
         <ul className="space-y-2 text-sm text-content-secondary list-disc list-inside">
           <li>Press <span className="font-mono text-xs text-content-primary">Tab</span> at the start of an indented line instead of typing each space individually.</li>
-          <li>After pressing <span className="font-mono text-xs text-content-primary">Enter</span>, indentation is inserted automatically — you jump straight to the first non-space character.</li>
+          <li>After pressing <span className="font-mono text-xs text-content-primary">Enter</span>, indentation is added for the next line. You can start typing the first non-space character.</li>
           <li>
             Typing <span className="font-mono text-xs text-content-primary">(</span>,{' '}
             <span className="font-mono text-xs text-content-primary">[</span>,{' '}
@@ -68,7 +68,7 @@ export default function GettingStarted() {
             empty pair removes the opener.
           </li>
           <li>A wrong character turns red and blocks the caret. Fix it with <span className="font-mono text-xs text-content-primary">Backspace</span> before moving on.</li>
-          <li>Your session stays in Zen mode while typing — the header and footer fade to keep you focused.</li>
+          <li>While you type, the header and footer fade out so you can focus on the code.</li>
           <li>Create a free local account to persist your progress and streak across sessions.</li>
         </ul>
       </section>
@@ -89,7 +89,7 @@ export default function GettingStarted() {
           <p>
             Share ghosts via friend codes or JSON from the{' '}
             <span className="font-medium text-content-primary">Friends</span> page or race results. Paste a
-            friend&apos;s code to add them offline — no server required.
+            friend&apos;s code to add them offline. No server required.
           </p>
         </div>
       </section>

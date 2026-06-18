@@ -164,7 +164,7 @@ export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChang
       </div>
       {ghostFinishedFirst && (
         <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between gap-3 rounded-lg border border-[var(--color-warning,#e8a838)] bg-background-secondary px-4 py-3 text-sm text-content-primary">
-          <span>The ghost finished first — keep typing to beat their time!</span>
+          <span>The ghost finished first. Keep typing to beat their time.</span>
           <button
             type="button"
             onClick={() => setGhostFinishedFirst(false)}

@@ -82,8 +82,8 @@ export default function Footer({ hidden, onShowLegal }: FooterProps) {
             className="text-content-secondary underline-offset-2 hover:text-accent hover:underline"
           >
             Buy me a coffee
-          </a>{' '}
-          — totally optional, but appreciated if you want to support development.
+          </a>
+          . Optional. Thanks if you want to support development.
         </p>
       </div>
     </footer>

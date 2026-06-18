@@ -96,7 +96,7 @@ export default function RaceLobby({ onStartRace, onManageFriends }: RaceLobbyPro
       options.push({
         key: builtinKey(tier, exerciseId),
         group: 'Built-in opponents',
-        label: `${tierLabel(tier)} — ${wpmLabel} wpm · ${accLabel} acc`,
+        label: `${tierLabel(tier)}, ${wpmLabel} wpm · ${accLabel} acc`,
         replay,
         source: { kind: 'builtin', tier, exerciseId },
         wpm: replay.wpm,
@@ -107,7 +107,7 @@ export default function RaceLobby({ onStartRace, onManageFriends }: RaceLobbyPro
       options.push({
         key: `self:${replay.id}`,
         group: 'My ghosts',
-        label: `${displayName} — ${replay.wpm} wpm (${formatWhen(replay.recordedAt)})`,
+        label: `${displayName}, ${replay.wpm} wpm (${formatWhen(replay.recordedAt)})`,
         replay,
         source: { kind: 'self', profileId: scopeId, replayId: replay.id },
         wpm: replay.wpm,
@@ -120,7 +120,7 @@ export default function RaceLobby({ onStartRace, onManageFriends }: RaceLobbyPro
         options.push({
           key: `account:${account.id}:${replay.id}`,
           group: 'Local accounts',
-          label: `${account.username} — ${replay.wpm} wpm`,
+          label: `${account.username}, ${replay.wpm} wpm`,
           replay,
           source: { kind: 'account', profileId: account.id, replayId: replay.id },
           wpm: replay.wpm,
@@ -133,7 +133,7 @@ export default function RaceLobby({ onStartRace, onManageFriends }: RaceLobbyPro
         options.push({
           key: `friend:${friend.id}:${replay.id}`,
           group: 'Friends',
-          label: `${friend.displayName} — ${replay.wpm} wpm`,
+          label: `${friend.displayName}, ${replay.wpm} wpm`,
           replay,
           source: { kind: 'friend', friendId: friend.id, replayId: replay.id },
           wpm: replay.wpm,

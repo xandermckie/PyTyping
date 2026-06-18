@@ -46,22 +46,22 @@ export default function AboutLegal() {
       </div>
 
       <p className="mb-8 text-sm leading-relaxed text-content-primary">
-        PyTyping is a minimalist game for learning Python by typing real code, with instant feedback,
-        short quizzes, and plain-language breakdowns. Created by{' '}
+        PyTyping helps you learn Python by typing real code, with short quizzes and breakdowns after each
+        exercise. Created by{' '}
         <ExtLink href={GITHUB_URL}>{AUTHOR_NAME}</ExtLink>.
       </p>
 
       <div className="flex flex-col gap-6">
         <Section title="Credits & inspiration">
-          PyTyping&apos;s interface is inspired by <ExtLink href={MONKEYTYPE_URL}>Monkeytype</ExtLink>, the
-          excellent open-source typing test. PyTyping is an independent project and is not affiliated
+          PyTyping&apos;s interface is inspired by <ExtLink href={MONKEYTYPE_URL}>Monkeytype</ExtLink>, an
+          open-source typing test. PyTyping is an independent project and is not affiliated
           with, endorsed by, or sponsored by Monkeytype.
         </Section>
 
         <Section title="License">
-          © {new Date().getFullYear()} {AUTHOR_NAME}. PyTyping is released under the MIT License — you
+          © {new Date().getFullYear()} {AUTHOR_NAME}. PyTyping is released under the MIT License. You
           may use, copy, modify, and distribute it with attribution and without warranty. The full
-          text ships in the project&apos;s <span className="font-mono">LICENSE</span> file.
+          text is in the project&apos;s <span className="font-mono">LICENSE</span> file.
         </Section>
 
         <Section title="Exercise attribution">
@@ -82,7 +82,7 @@ export default function AboutLegal() {
           tracking of any kind. Guest progress is stored only for the current browser session
           (sessionStorage). When you create an account, your data and settings are stored locally on
           your device (localStorage); passwords are salted and hashed (PBKDF2-SHA-256), never stored
-          in plain text. If Web Crypto is unavailable, a weaker hash fallback is used — see Settings
+          in plain text. If Web Crypto is unavailable, a weaker hash fallback is used. See Settings
           for export options. Use Export backup in Settings to move your data between devices.
           <p className="mt-3">
             If you choose a non-system font in Settings, your browser may download font files from{' '}
@@ -97,14 +97,14 @@ export default function AboutLegal() {
           </p>
           <p className="mt-3">
             Ghost race replays are stored locally on your device. Exporting a ghost file includes your
-            display name, exercise id, typing speed, accuracy, and cursor timing — not the full
+            display name, exercise id, typing speed, accuracy, and cursor timing. It does not include the full
             exercise source code. Importing a friend&apos;s ghost is a user-initiated file upload;
             PyTyping does not fetch ghosts from the network.
           </p>
           <p className="mt-3">
             Friend codes are compressed pasteable strings you share manually (chat, email, etc.). They may
             include an optional profile photo thumbnail and replay timing data. Profile photos for local
-            accounts are stored only on your device and in backup exports — never uploaded to a server.
+            accounts are stored only on your device and in backup exports. They are never uploaded to a server.
           </p>
           <p className="mt-3">
             Backups (Settings → Export) include ghost replays, friend imports, profile photos, and race rank
@@ -113,19 +113,19 @@ export default function AboutLegal() {
         </Section>
 
         <Section title="Accessibility">
-          PyTyping is designed to meet WCAG 2.1 Level AA. Keyboard navigation, visible focus, skip
-          links, screen-reader announcements for typing feedback, modal focus trapping, and reduced-motion
-          support are built in. Use Guided mode for full code visibility with assistive technology;
-          Challenge mode provides a structure hint via screen readers but hides untyped characters
-          visually. If you encounter a barrier, please{' '}
+          PyTyping targets WCAG 2.1 Level AA. Keyboard navigation, visible focus, skip links,
+          screen-reader announcements for typing feedback, modal focus trapping, and reduced-motion
+          support are built in. Use Guided mode for full code visibility with a screen reader.
+          Challenge mode gives a structure hint but hides untyped characters on screen. If something
+          does not work for you, please{' '}
           <ExtLink href={GITHUB_BUG_REPORT_URL}>report it on GitHub</ExtLink> and mention
           &quot;accessibility&quot; in the issue.
         </Section>
 
         <Section title="Support">
           PyTyping is free and open source. If you enjoy it, you can optionally{' '}
-          <ExtLink href={BUY_ME_A_COFFEE_URL}>buy me a coffee</ExtLink> — there is no paywall and
-          support is never required.
+          <ExtLink href={BUY_ME_A_COFFEE_URL}>buy me a coffee</ExtLink>. There is no paywall. Support is
+          never required.
         </Section>
 
         <Section title="Disclaimer">

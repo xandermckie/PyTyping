@@ -14,7 +14,7 @@ export function showPhaseNotification(phase: 'focus' | 'break'): void {
   if (Notification.permission !== 'granted') return;
   try {
     new Notification('PyTyping Pomodoro', {
-      body: phase === 'focus' ? 'Break time — step away for a few minutes.' : 'Focus time — back to work.',
+      body: phase === 'focus' ? 'Break time. Step away for a few minutes.' : 'Focus time. Back to work.',
       tag: `pytyping-pomodoro-${phase}`,
     });
   } catch {

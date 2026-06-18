@@ -18,7 +18,7 @@ const CARDS: ContributeCard[] = [
   {
     title: 'Request a new language',
     description:
-      'Want JavaScript, Rust, SQL, or something else? Open an issue and tell us which language and why — popular requests get built first.',
+      'Want JavaScript, Rust, SQL, or something else? Open an issue and say which language you want. Popular requests get built first.',
     cta: 'Request a language →',
     url: GITHUB_LANGUAGE_REQUEST_URL,
     accent: true,
@@ -33,7 +33,7 @@ const CARDS: ContributeCard[] = [
   {
     title: 'Propose a new exercise',
     description:
-      'Have a Python snippet you wish was in the library? Share the code and a plain-language explanation in a GitHub issue and we\'ll consider adding it.',
+      'Have a Python snippet you want in the library? Share the code and a short explanation in a GitHub issue.',
     cta: 'Suggest an exercise →',
     url: GITHUB_EXERCISE_SUGGESTION_URL,
   },
@@ -51,10 +51,10 @@ export default function Contribute() {
     <div className="mx-auto w-full max-w-3xl pb-16">
       <header className="py-12 sm:py-16">
         <h1 className="text-3xl font-semibold tracking-tight text-content-primary sm:text-4xl">
-          Help shape PyTyping
+          Contribute to PyTyping
         </h1>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-content-secondary">
-          PyTyping is built in public by{' '}
+          PyTyping is open source on{' '}
           <a
             href={GITHUB_REPO_URL}
             target="_blank"
@@ -63,8 +63,7 @@ export default function Contribute() {
           >
             {AUTHOR_NAME}
           </a>
-          . The best way to get something added or changed is to open a GitHub issue — no account
-          setup required beyond a free GitHub login.
+          . To request a change, open a GitHub issue. You only need a free GitHub account.
         </p>
       </header>
 
@@ -100,8 +99,8 @@ export default function Contribute() {
         <h2 className="mb-1 text-sm font-semibold text-content-primary">How requests are prioritised</h2>
         <p className="text-sm leading-relaxed text-content-secondary">
           New languages are added when there is enough demand and a clear exercise set to go with
-          them. Thumbs-up reactions on a GitHub issue are the fastest signal — they tell us what
-          matters to the most people. Bug fixes and typo corrections are always merged quickly.
+          them. Thumbs-up reactions on a GitHub issue help us see what people want. Bug fixes and typos
+          are usually merged quickly.
         </p>
       </section>
     </div>

@@ -57,8 +57,8 @@ export default function Home({ onSelectExercise, onNavigate }: HomeProps) {
           Learn Python by typing it.
         </h1>
         <p className="mt-4 max-w-lg text-base leading-relaxed text-content-secondary">
-          Type real Python snippets character by character with instant feedback, then deepen your
-          understanding with a quiz and plain-language breakdown.
+          Type real Python snippets one character at a time. When you finish, take a short quiz and read
+          a breakdown of what you typed.
         </p>
 
         {/* Meta row */}

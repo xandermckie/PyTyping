@@ -20,7 +20,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 /** Minimal inline trend line of values (e.g. WPM across attempts). */
 function Sparkline({ values, width = 96, height = 28 }: { values: number[]; width?: number; height?: number }) {
   if (values.length < 2) {
-    return <div className="h-7 text-xs text-content-tertiary">—</div>;
+    return <div className="h-7 text-xs text-content-tertiary">-</div>;
   }
   const min = Math.min(...values);
   const max = Math.max(...values);
