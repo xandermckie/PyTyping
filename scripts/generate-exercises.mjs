@@ -71,6 +71,81 @@ function pickDistractors(correct, pool, n, extras = []) {
   return out;
 }
 
+const PAD_CLAUSES = [
+  ' in typical Python usage',
+  ' for values like these',
+  ' when this snippet runs',
+  ' under normal conditions',
+];
+
+/** Lengthen short distractors so they are not obvious by length alone. */
+function balanceDistractor(correct, distractor) {
+  const minLen = Math.max(Math.floor(correct.length * 0.88), correct.length - 8);
+  if (distractor.length >= minLen) return distractor;
+  let padded = distractor;
+  let round = 0;
+  while (padded.length < minLen && round < 12) {
+    padded += PAD_CLAUSES[round % PAD_CLAUSES.length];
+    round += 1;
+  }
+  if (padded.length < minLen) {
+    padded = `${distractor} — not what this snippet demonstrates`;
+  }
+  return padded;
+}
+
+const rand = makeRng(20260615);
+let seq = 0;
+
+function buildMcQuestion({ question, correct, wrong, explanation }) {
+  const distractors = wrong.slice(0, 3).map((w) => balanceDistractor(correct, w));
+  const options = shuffle([correct, ...distractors], rand);
+  return {
+    question,
+    options,
+    correctIndex: options.indexOf(correct),
+    explanation,
+  };
+}
+
+function rebalanceExistingQuestion(q) {
+  const correct = q.options[q.correctIndex];
+  const wrong = q.options.filter((_, i) => i !== q.correctIndex);
+  while (wrong.length < 3) {
+    wrong.push('A plausible alternative that does not apply here');
+  }
+  return buildMcQuestion({
+    question: q.question,
+    correct,
+    wrong: wrong.slice(0, 3),
+    explanation: q.explanation,
+  });
+}
+
+function isCorrectUniqueLongest(q) {
+  const lens = q.options.map((o) => o.length);
+  const max = Math.max(...lens);
+  const correctLen = q.options[q.correctIndex].length;
+  const longestCount = lens.filter((l) => l === max).length;
+  return correctLen === max && longestCount === 1;
+}
+
+function validateQuizBalance(exercises) {
+  let total = 0;
+  let biased = 0;
+  for (const ex of exercises) {
+    for (const q of ex.quiz) {
+      total += 1;
+      if (isCorrectUniqueLongest(q)) biased += 1;
+    }
+  }
+  const pct = total > 0 ? (biased / total) * 100 : 0;
+  console.log(`Quiz balance: ${biased}/${total} (${pct.toFixed(1)}%) have correct as unique longest`);
+  if (pct > 35) {
+    console.warn('WARNING: quiz length bias exceeds 35% — review distractor balancing');
+  }
+}
+
 /* --------------------------------- data ----------------------------------- */
 
 const WORDS = [
@@ -107,112 +182,177 @@ const CONCEPTS = {
   strings: [
     {
       question: 'Are Python strings mutable?',
-      options: ['No — string methods return a new string', 'Yes — they can be edited in place'],
-      correctIndex: 0,
-      explanation: 'Strings are immutable; methods like .upper() return a brand-new string and leave the original unchanged.',
+      correct: 'No — string methods return a new string and leave the original unchanged',
+      wrong: [
+        'Yes — individual characters can be reassigned in place like a list',
+        'Yes — methods like .upper() modify the original string object directly',
+        'Only when the string uses single quotes instead of double quotes',
+      ],
+      explanation:
+        'Strings are immutable; methods like .upper() return a brand-new string and leave the original unchanged.',
     },
     {
       question: 'What does indexing a string like text[0] return?',
-      options: ['A one-character string', 'A list of characters', 'The character code', 'A tuple'],
-      correctIndex: 0,
+      correct: 'A one-character string (Python has no separate char type)',
+      wrong: [
+        'A list containing a single character element you can append to',
+        'The Unicode code point as an integer value for that position',
+        'A tuple with one character that cannot be modified afterward',
+      ],
       explanation: 'Indexing returns a length-1 string in Python (there is no separate char type).',
     },
   ],
   lists: [
     {
       question: 'Lists in Python are…',
-      options: ['ordered and mutable', 'unordered', 'immutable', 'fixed-size'],
-      correctIndex: 0,
+      correct: 'Ordered sequences that can be changed in place after creation',
+      wrong: [
+        'Unordered collections where insertion order is not preserved',
+        'Immutable sequences like tuples that cannot grow or shrink',
+        'Fixed-size arrays whose length is set at compile time',
+      ],
       explanation: 'Lists keep insertion order and can be changed in place.',
     },
     {
       question: 'What does sorted() do to the original list?',
-      options: ['Leaves it unchanged and returns a new sorted list', 'Sorts it in place and returns None'],
-      correctIndex: 0,
+      correct: 'Leaves the original list unchanged and returns a new sorted copy',
+      wrong: [
+        'Sorts the list in place and returns None when finished',
+        'Removes duplicate items while sorting the list in place',
+        'Returns a view that stays linked to the original ordering',
+      ],
       explanation: 'sorted() returns a new list; list.sort() is the in-place version.',
     },
   ],
   math: [
     {
       question: 'What does the // operator do?',
-      options: ['Floor division (discards the fractional part)', 'Float division', 'Exponentiation', 'Modulo'],
-      correctIndex: 0,
+      correct: 'Floor division — discards the fractional part toward negative infinity',
+      wrong: [
+        'Float division that always keeps the decimal portion of the result',
+        'Exponentiation that raises the left operand to the right power',
+        'Modulo that returns only the remainder after integer division',
+      ],
       explanation: '// divides and rounds down to the nearest whole number.',
     },
     {
       question: 'What does the % operator return?',
-      options: ['The remainder of division', 'The quotient', 'A percentage', 'The floor'],
-      correctIndex: 0,
+      correct: 'The remainder left over after integer division of the operands',
+      wrong: [
+        'The quotient rounded down to the nearest whole number value',
+        'A percentage scaled between zero and one hundred for display',
+        'The floor of the division result toward negative infinity',
+      ],
       explanation: '% yields the remainder; ** is power and // is floor division.',
     },
   ],
   dicts: [
     {
       question: 'What does dict.get("k") return if "k" is missing?',
-      options: ['None (or the default you pass)', 'It raises KeyError', '0', 'An empty string'],
-      correctIndex: 0,
+      correct: 'None, or the default value you pass as the second argument',
+      wrong: [
+        'It raises KeyError immediately, just like bracket access would',
+        'The integer zero as a sentinel meaning the key was not found',
+        'An empty string that you must check before using the result',
+      ],
       explanation: 'Unlike d["k"], .get() returns None (or a supplied default) instead of raising.',
     },
     {
       question: 'What does "key" in some_dict check?',
-      options: ['Whether the key exists', 'Whether the value exists', 'The number of keys', 'Nothing useful'],
-      correctIndex: 0,
+      correct: 'Whether that key exists among the dictionary\'s keys',
+      wrong: [
+        'Whether the associated value is truthy when evaluated as a boolean',
+        'The total number of key-value pairs stored in the dictionary',
+        'Nothing useful — membership only works on lists and tuples',
+      ],
       explanation: 'The in operator on a dict tests membership among its keys.',
     },
   ],
   loops: [
     {
       question: 'What does range(a, b) include?',
-      options: ['a up to but not including b', 'a and b inclusive', 'b down to a', 'only b'],
-      correctIndex: 0,
+      correct: 'Integers from a up to but not including b (half-open interval)',
+      wrong: [
+        'Both endpoints a and b inclusive, like a closed interval in math',
+        'Only the stop value b, counting backward from the start index',
+        'Just the final value b and none of the integers before it',
+      ],
       explanation: 'range is inclusive of the start and exclusive of the stop.',
     },
     {
       question: 'Is range() evaluated lazily?',
-      options: ['Yes — it produces values on demand', 'No — it builds a full list immediately'],
-      correctIndex: 0,
+      correct: 'Yes — it yields values on demand without building a full list',
+      wrong: [
+        'No — it immediately materializes every integer into a list in memory',
+        'Only when wrapped in list(); otherwise it is always eager',
+        'No — lazy evaluation applies only to generator expressions',
+      ],
       explanation: 'range is a lazy sequence; wrap it in list() to materialize it.',
     },
   ],
   fstrings: [
     {
       question: 'What goes inside the {} of an f-string?',
-      options: ['Any Python expression', 'Only variable names', 'Only strings', 'Only numbers'],
-      correctIndex: 0,
+      correct: 'Any Python expression that is evaluated at runtime',
+      wrong: [
+        'Only simple variable names that were defined earlier in scope',
+        'Only string literals that have already been assigned to names',
+        'Only numeric literals and arithmetic with no function calls',
+      ],
       explanation: 'f-strings evaluate arbitrary expressions inside the braces at runtime.',
     },
     {
       question: 'What does the :.2f format spec do?',
-      options: ['Formats a number with 2 decimal places', 'Rounds to 2 significant figures', 'Pads with 2 spaces', 'Adds 2 to the value'],
-      correctIndex: 0,
+      correct: 'Formats a number with exactly two digits after the decimal point',
+      wrong: [
+        'Rounds a number to two significant figures for scientific display',
+        'Pads the output with two leading spaces before the numeric text',
+        'Adds two to the numeric value before converting it to a string',
+      ],
       explanation: '.2f fixes the output to two digits after the decimal point.',
     },
   ],
   types: [
     {
       question: 'What does type(x) tell you?',
-      options: ["The object's class", 'Its value', 'Its length', 'Its memory address'],
-      correctIndex: 0,
+      correct: "The object's class — what kind of value x is",
+      wrong: [
+        'The current value stored inside x, converted to a readable string',
+        'The number of elements or characters contained within x',
+        'The memory address where x is stored in the interpreter heap',
+      ],
       explanation: 'type() returns the class of the object; .__name__ gives that class name as a string.',
     },
     {
       question: 'What is the type of a value like True?',
-      options: ['bool', 'int', 'str', 'None'],
-      correctIndex: 0,
+      correct: 'bool — a dedicated boolean type (subclass of int)',
+      wrong: [
+        'int — because True and False are stored as one and zero internally',
+        'str — because True prints as the text True when converted',
+        'NoneType — because booleans represent the absence of a value',
+      ],
       explanation: 'True and False are of type bool (a subclass of int).',
     },
   ],
   booleans: [
     {
       question: 'Which values are "falsy" in Python?',
-      options: ['0, "", [], {}, None', 'only False', 'only None', 'negative numbers'],
-      correctIndex: 0,
+      correct: '0, empty string, empty list, empty dict, and None',
+      wrong: [
+        'Only the literal False — every other object is truthy in Python',
+        'Only None — missing values are the sole falsy case in Python',
+        'Any negative number, because sign determines truthiness in Python',
+      ],
       explanation: 'Empty containers, 0, empty string, and None all evaluate to False in a boolean context.',
     },
     {
       question: 'What does bool(x) do?',
-      options: ['Returns the truthiness of x as True/False', 'Always returns True', 'Converts x to an integer'],
-      correctIndex: 0,
+      correct: 'Returns True or False according to Python\'s truthiness rules',
+      wrong: [
+        'Always returns True for any object that was successfully constructed',
+        'Converts x to an integer, discarding any fractional component',
+        'Returns None when x is falsy instead of the boolean False value',
+      ],
       explanation: 'bool() applies Python truthiness rules and returns True or False.',
     },
   ],
@@ -220,11 +360,9 @@ const CONCEPTS = {
 
 /* ------------------------------- builder ---------------------------------- */
 
-const rand = makeRng(20260615);
-let seq = 0;
-
 function outputQuestion(correct, distractorPool, extras = []) {
-  const distractors = pickDistractors(correct, distractorPool, 3, extras);
+  const raw = pickDistractors(correct, distractorPool, 3, extras);
+  const distractors = raw.map((d) => balanceDistractor(correct, d));
   const options = shuffle([correct, ...distractors], rand);
   return {
     question: 'What does this code print?',
@@ -241,7 +379,7 @@ function outputQuestion(correct, distractorPool, extras = []) {
 function make(spec) {
   seq += 1;
   const id = `gen-${spec.cat}-${String(seq).padStart(3, '0')}`;
-  const concepts = CONCEPTS[spec.concept] ?? [];
+  const concepts = (CONCEPTS[spec.concept] ?? []).map(buildMcQuestion);
   return {
     id,
     title: spec.title,
@@ -911,7 +1049,10 @@ builders.push(() => {
 const CAPS = [80, 90, 100, 90, 40, 30, 30, 30, 20]; // per builder; curated fills remainder to 500
 const TARGET_TOTAL = 500;
 
-const curated = JSON.parse(readFileSync(resolve(ROOT, 'src/data/curated.json'), 'utf8'));
+const curated = JSON.parse(readFileSync(resolve(ROOT, 'src/data/curated.json'), 'utf8')).map((ex) => ({
+  ...ex,
+  quiz: ex.quiz.map(rebalanceExistingQuestion),
+}));
 const generated = [];
 const seenCode = new Set(curated.map((e) => e.code));
 
@@ -942,6 +1083,7 @@ for (const group of byCat.values()) {
 }
 
 const all = [...curated, ...generated].slice(0, TARGET_TOTAL);
+validateQuizBalance(all);
 writeFileSync(resolve(ROOT, 'src/data/exercises.json'), JSON.stringify(all, null, 2) + '\n');
 
 const counts = {};

@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import CodePeekPanel from './CodePeekPanel';
+import StaticCode from './StaticCode';
 import type { QuizQuestion, QuizScore } from '../types/exercise';
 
 interface QuizPanelProps {
   exerciseId: string;
+  code: string;
   questions: QuizQuestion[];
   onComplete: (score: QuizScore) => void;
 }
 
-export default function QuizPanel({ exerciseId, questions, onComplete }: QuizPanelProps) {
+export default function QuizPanel({ exerciseId, code, questions, onComplete }: QuizPanelProps) {
+  const [codeOpen, setCodeOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [selections, setSelections] = useState<Array<number | null>>(() =>
     questions.map(() => null),
@@ -95,6 +99,10 @@ export default function QuizPanel({ exerciseId, questions, onComplete }: QuizPan
 
   return (
     <div className="mx-auto w-full max-w-2xl">
+      <CodePeekPanel open={codeOpen} onToggle={() => setCodeOpen((o) => !o)}>
+        <StaticCode code={code} />
+      </CodePeekPanel>
+
       {/* Progress header */}
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wider text-content-tertiary">

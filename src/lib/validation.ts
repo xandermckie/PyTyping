@@ -127,6 +127,18 @@ export function validateExercise(raw: unknown): Exercise | null {
   const cleanQuiz = quiz.map(validateQuestion).filter((q): q is QuizQuestion => q !== null);
   if (cleanQuiz.length === 0) return null;
 
+  if (import.meta.env.DEV) {
+    for (const q of cleanQuiz) {
+      const lens = q.options.map((o) => o.length);
+      const max = Math.max(...lens);
+      const correctLen = q.options[q.correctIndex].length;
+      const longestCount = lens.filter((l) => l === max).length;
+      if (correctLen === max && longestCount === 1) {
+        console.warn(`[PyTyping] Quiz "${id}": correct answer is uniquely longest`);
+      }
+    }
+  }
+
   return {
     id,
     title,

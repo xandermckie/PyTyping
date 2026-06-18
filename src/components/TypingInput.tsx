@@ -3,6 +3,7 @@ import type { KeyboardEvent, MouseEvent } from 'react';
 import { tokenizeToCells } from '../lib/highlight';
 import type { CharCell } from '../lib/highlight';
 import { playErrorBlip } from '../lib/sound';
+import { getAutoCloseCount } from '../lib/delimiter-pairing';
 import { computeAccuracy, applyTabToCounters, undoCorrectKeystroke } from '../lib/typing-stats';
 import { useSettings } from '../context/SettingsContext';
 import type { TypingStats } from '../types/exercise';
@@ -155,6 +156,8 @@ export default function TypingInput({
   //     native input handler); a tick counter forces re-render for the view.
   const cursorRef = useRef(0); // index of the next expected character
   const errorRef = useRef(-1); // index currently mistyped, or -1
+  /** Index of an auto-inserted closer, or -1 when none pending undo. */
+  const autoClosedAtRef = useRef(-1);
   const statsRef = useRef({ keystrokes: 0, correct: 0, errors: 0, startedAt: 0, finishedAt: 0 });
   const [, forceRender] = useState(0);
   const rerender = useCallback(() => forceRender((n) => n + 1), []);
@@ -212,6 +215,12 @@ export default function TypingInput({
       stats.correct += 1;
       cursorRef.current = i + 1;
       errorRef.current = -1;
+      autoClosedAtRef.current = -1;
+      if (getAutoCloseCount(cells, cursorRef.current) === 1) {
+        stats.correct += 1;
+        autoClosedAtRef.current = cursorRef.current;
+        cursorRef.current += 1;
+      }
       if (cursorRef.current === total) finishRef.current();
     } else {
       stats.errors += 1;
@@ -266,8 +275,17 @@ export default function TypingInput({
     if (errorRef.current !== -1) {
       errorRef.current = -1; // first clear an outstanding mistake
     } else if (cursorRef.current > 0) {
-      cursorRef.current -= 1;
-      undoCorrectKeystroke(statsRef.current);
+      const pos = cursorRef.current;
+      if (autoClosedAtRef.current === pos - 1) {
+        cursorRef.current -= 2;
+        autoClosedAtRef.current = -1;
+        undoCorrectKeystroke(statsRef.current);
+        undoCorrectKeystroke(statsRef.current);
+      } else {
+        cursorRef.current -= 1;
+        autoClosedAtRef.current = -1;
+        undoCorrectKeystroke(statsRef.current);
+      }
     }
   }, []);
 
@@ -325,6 +343,12 @@ export default function TypingInput({
         inputRef.current?.blur();
         return;
       }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleEnter();
+        rerender();
+        return;
+      }
       if (e.key === 'Backspace') {
         // Handle here for desktop reliability; dedupe guards the mobile path.
         e.preventDefault();
@@ -332,7 +356,7 @@ export default function TypingInput({
         rerender();
       }
     },
-    [focusInput, handleBackspace, handleTab, rerender],
+    [focusInput, handleBackspace, handleEnter, handleTab, rerender],
   );
 
   // Focus the typing field on mount.
@@ -436,6 +460,7 @@ export default function TypingInput({
             keyboards can't tamper with single-character input. */}
         <textarea
           ref={inputRef}
+          name="pytyping-snippet"
           value=""
           onChange={() => {}}
           onKeyDown={onKeyDown}
@@ -443,12 +468,16 @@ export default function TypingInput({
           onBlur={handleBlur}
           disabled={done}
           aria-label="Type the displayed Python code"
+          aria-autocomplete="none"
           autoCapitalize="off"
           autoCorrect="off"
           autoComplete="off"
           spellCheck={false}
           inputMode="text"
           enterKeyHint="enter"
+          data-1p-ignore
+          data-form-type="other"
+          data-lpignore="true"
           className="absolute inset-0 h-full w-full cursor-text resize-none rounded-lg bg-transparent p-3 sm:p-6 font-mono text-transparent caret-transparent outline-none"
           style={{ fontSize: 'var(--font-code-size)' }}
         />

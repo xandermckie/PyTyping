@@ -1,0 +1,38 @@
+name: Exercise suggestion
+description: Propose a new Python snippet for the exercise library
+title: '[Exercise] '
+labels:
+  - exercise
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Suggested title
+      placeholder: e.g. List comprehension filter
+    validations:
+      required: true
+  - type: textarea
+    id: code
+    attributes:
+      label: Python code
+      description: Paste the snippet learners would type
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: explanation
+    attributes:
+      label: Plain-language explanation
+      description: What concept does this teach? Why is it useful?
+    validations:
+      required: true
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Suggested difficulty
+      options:
+        - beginner
+        - intermediate
+        - advanced
+    validations:
+      required: true

@@ -1,0 +1,32 @@
+name: Request a new language
+description: Suggest a new programming language for PyTyping
+title: '[Language request] '
+labels:
+  - language-request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping shape PyTyping! Tell us which language you'd like to practice and why it would be useful.
+  - type: input
+    id: language
+    attributes:
+      label: Which language?
+      placeholder: e.g. JavaScript, Rust, SQL
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why would this language be useful?
+      description: Who is the audience? What kinds of exercises would you expect?
+      placeholder: I want to practice JavaScript because...
+    validations:
+      required: true
+  - type: checkboxes
+    id: willing
+    attributes:
+      label: Optional
+      options:
+        - label: I'd be willing to help author or review exercises for this language
+          required: false

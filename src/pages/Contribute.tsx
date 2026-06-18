@@ -1,7 +1,8 @@
 import {
   AUTHOR_NAME,
-  GITHUB_DISCUSSIONS_URL,
-  GITHUB_ISSUES_URL,
+  GITHUB_BUG_REPORT_URL,
+  GITHUB_EXERCISE_SUGGESTION_URL,
+  GITHUB_LANGUAGE_REQUEST_URL,
   GITHUB_REPO_URL,
 } from '../lib/links';
 
@@ -17,24 +18,24 @@ const CARDS: ContributeCard[] = [
   {
     title: 'Request a new language',
     description:
-      'Want JavaScript, Rust, SQL, or something else? Open a discussion and tell us which language and why — popular requests get built first.',
-    cta: 'Start a discussion →',
-    url: GITHUB_DISCUSSIONS_URL,
+      'Want JavaScript, Rust, SQL, or something else? Open an issue and tell us which language and why — popular requests get built first.',
+    cta: 'Request a language →',
+    url: GITHUB_LANGUAGE_REQUEST_URL,
     accent: true,
   },
   {
     title: 'Suggest an improvement',
     description:
       'Found a bug, a typo, or an exercise that could be clearer? Open an issue on GitHub and describe what you expected vs. what happened.',
-    cta: 'Open an issue →',
-    url: GITHUB_ISSUES_URL,
+    cta: 'Report a bug →',
+    url: GITHUB_BUG_REPORT_URL,
   },
   {
     title: 'Propose a new exercise',
     description:
       'Have a Python snippet you wish was in the library? Share the code and a plain-language explanation in a GitHub issue and we\'ll consider adding it.',
-    cta: 'Open an issue →',
-    url: GITHUB_ISSUES_URL,
+    cta: 'Suggest an exercise →',
+    url: GITHUB_EXERCISE_SUGGESTION_URL,
   },
   {
     title: 'Browse the source',
@@ -62,8 +63,8 @@ export default function Contribute() {
           >
             {AUTHOR_NAME}
           </a>
-          . The best way to get something added or changed is to open a GitHub issue or
-          discussion — no account setup required beyond a free GitHub login.
+          . The best way to get something added or changed is to open a GitHub issue — no account
+          setup required beyond a free GitHub login.
         </p>
       </header>
 
@@ -99,9 +100,8 @@ export default function Contribute() {
         <h2 className="mb-1 text-sm font-semibold text-content-primary">How requests are prioritised</h2>
         <p className="text-sm leading-relaxed text-content-secondary">
           New languages are added when there is enough demand and a clear exercise set to go with
-          them. Thumbs-up reactions on a GitHub discussion or issue are the fastest signal — they
-          tell us what matters to the most people. Bug fixes and typo corrections are always merged
-          quickly.
+          them. Thumbs-up reactions on a GitHub issue are the fastest signal — they tell us what
+          matters to the most people. Bug fixes and typo corrections are always merged quickly.
         </p>
       </section>
     </div>

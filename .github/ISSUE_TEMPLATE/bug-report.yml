@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a bug, typo, or unclear exercise
+title: '[Bug] '
+labels:
+  - bug
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+  - type: input
+    id: exercise
+    attributes:
+      label: Exercise ID (if applicable)
+      placeholder: e.g. py-basics-swap-001
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser / device
+      options:
+        - Chrome (desktop)
+        - Firefox (desktop)
+        - Safari (desktop)
+        - Safari (iOS)
+        - Chrome (Android)
+        - Other
+    validations:
+      required: true

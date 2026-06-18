@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
 import type { ReactNode } from 'react';
-import { tokenizeToCells } from '../lib/highlight';
+import StaticCode from './StaticCode';
 import type { Exercise } from '../types/exercise';
 
 interface BreakdownPanelProps {
@@ -10,51 +9,6 @@ interface BreakdownPanelProps {
   onSelectExercise: (id: string) => void;
   onNext: () => void;
   recommendedExerciseId?: string | null;
-}
-
-/** Read-only, syntax-highlighted recap of the snippet (no validation state). */
-function StaticCode({ code, lineNumbers = true }: { code: string; lineNumbers?: boolean }) {
-  const lines = useMemo(() => {
-    const cells = tokenizeToCells(code);
-    const result: Array<typeof cells> = [];
-    let buf: typeof cells = [];
-    cells.forEach((cell) => {
-      if (cell.char === '\n') {
-        result.push(buf);
-        buf = [];
-      } else {
-        buf.push(cell);
-      }
-    });
-    result.push(buf);
-    return result;
-  }, [code]);
-
-  return (
-    <pre
-      className="overflow-x-auto rounded-lg border border-border-tertiary bg-background-secondary p-4 font-mono leading-[1.6]"
-      style={{ fontSize: 'var(--font-code-size)' }}
-    >
-      <code>
-        {lines.map((cells, li) => (
-          <div key={li} className="flex">
-            {lineNumbers && (
-              <span className="select-none pr-4 text-right text-content-tertiary" style={{ minWidth: '2.5ch' }}>
-                {li + 1}
-              </span>
-            )}
-            <span className="whitespace-pre">
-              {cells.length === 0 ? '​' : cells.map((c, ci) => (
-                <span key={ci} className={c.className}>
-                  {c.char}
-                </span>
-              ))}
-            </span>
-          </div>
-        ))}
-      </code>
-    </pre>
-  );
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
