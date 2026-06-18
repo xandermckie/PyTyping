@@ -2,15 +2,15 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { SessionProvider, useSession } from './context/SessionContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import AppHeader, { type AppView } from './components/AppHeader';
 import Home from './pages/Home';
-import AccountMenu from './components/AccountMenu';
 import LoginScreen from './components/LoginScreen';
 import Footer from './components/Footer';
-import Logo from './components/Logo';
 import CommandPalette from './components/CommandPalette';
 import type { Command } from './components/CommandPalette';
 import { EXERCISES } from './lib/exercises';
 import { THEME_OPTIONS } from './lib/theme';
+import { registerGlobalErrorHandlers } from './lib/global-errors';
 
 // Lazy-load pages not needed on the initial render — keeps the first-paint
 // bundle lean. Each becomes its own chunk that Vite splits automatically.
@@ -27,16 +27,18 @@ function PageFallback() {
   return <div className="py-16 text-center text-sm text-content-tertiary">Loading…</div>;
 }
 
-type View = 'home' | 'typing' | 'settings' | 'progress' | 'login' | 'about' | 'guide' | 'contribute' | 'getting-started' | 'leaderboard';
-
-const NAV: Array<{ id: Exclude<View, 'typing' | 'login' | 'about'>; label: string }> = [
-  { id: 'home', label: 'Exercises' },
-  { id: 'guide', label: 'Guide' },
-  { id: 'leaderboard', label: 'Leaderboard' },
-  { id: 'progress', label: 'Progress' },
-  { id: 'settings', label: 'Settings' },
-  { id: 'contribute', label: 'Contribute' },
-];
+const PAGE_TITLES: Record<AppView, string> = {
+  home: 'Exercises',
+  typing: 'Typing',
+  settings: 'Settings',
+  progress: 'Progress',
+  login: 'Log in',
+  about: 'About & legal',
+  guide: 'Python guide',
+  contribute: 'Contribute',
+  'getting-started': 'Getting Started',
+  leaderboard: 'Leaderboard',
+};
 
 /**
  * Top-level shell. Routing is a small view state machine (no router library).
@@ -46,7 +48,7 @@ const NAV: Array<{ id: Exclude<View, 'typing' | 'login' | 'about'>; label: strin
 function AppShell() {
   const { settings, update } = useSettings();
   const { isGuest, logout } = useSession();
-  const [view, setView] = useState<View>('home');
+  const [view, setView] = useState<AppView>('home');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [chromeHidden, setChromeHidden] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -59,6 +61,10 @@ function AppShell() {
 
   useEffect(() => {
     if (view !== 'typing') setChromeHidden(false);
+  }, [view]);
+
+  useEffect(() => {
+    document.title = `${PAGE_TITLES[view]} — PyTyping`;
   }, [view]);
 
   useEffect(() => {
@@ -113,49 +119,24 @@ function AppShell() {
 
   // The login screen is a focused, full-page view without the app chrome.
   if (view === 'login') {
-    return <LoginScreen onDone={goHome} onGuest={goHome} />;
+    return <LoginScreen onDone={goHome} onGuest={goHome} onShowLegal={() => setView('about')} />;
   }
 
   return (
     <div className="flex min-h-full flex-col">
-      <header
-        className={`sticky top-0 z-30 border-b border-border-tertiary bg-background-primary/95 backdrop-blur-md transition-opacity duration-300 ${
-          chromeHidden ? 'pointer-events-none opacity-0' : 'opacity-100'
-        }`}
-      >
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-6">
-          <button type="button" onClick={goHome} className="rounded-md focus-visible:outline-none" aria-label="PyTyping home">
-            <Logo size={24} />
-          </button>
-          <div className="flex min-w-0 items-center gap-0.5">
-            <nav className="flex gap-0.5 overflow-x-auto" aria-label="Primary" style={{ scrollbarWidth: 'none' }}>
-              {NAV.map((item) => {
-                const active = view === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    aria-current={active ? 'page' : undefined}
-                    onClick={() => setView(item.id)}
-                    className={`shrink-0 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3 ${
-                      active
-                        ? 'text-accent'
-                        : 'text-content-secondary hover:bg-background-secondary hover:text-content-primary'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </nav>
-            <div className="ml-2 border-l border-border-tertiary pl-2">
-              <AccountMenu onShowLogin={() => setView('login')} onManage={() => setView('settings')} />
-            </div>
-          </div>
-        </div>
-      </header>
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
 
-      <main className="flex-1 px-4 py-8 sm:px-6">
+      <AppHeader
+        view={view}
+        chromeHidden={chromeHidden}
+        onNavigate={setView}
+        onGoHome={goHome}
+        onShowLogin={() => setView('login')}
+      />
+
+      <main id="main-content" tabIndex={-1} className="flex-1 px-4 py-8 outline-none sm:px-6">
         {view === 'home' && <Home onSelectExercise={startExercise} />}
         <Suspense fallback={<PageFallback />}>
           {view === 'guide' && <PythonGuide />}
@@ -185,14 +166,7 @@ function AppShell() {
 }
 
 export default function App() {
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    const onRejection = (e: PromiseRejectionEvent) => {
-      console.error('[PyTyping] Unhandled rejection:', e.reason);
-    };
-    window.addEventListener('unhandledrejection', onRejection);
-    return () => window.removeEventListener('unhandledrejection', onRejection);
-  }, []);
+  useEffect(() => registerGlobalErrorHandlers(), []);
 
   return (
     <ErrorBoundary>

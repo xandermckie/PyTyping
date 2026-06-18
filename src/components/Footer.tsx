@@ -36,7 +36,7 @@ export default function Footer({ hidden, onShowLegal }: FooterProps) {
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border-tertiary pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border-tertiary pt-3">
           <span className="font-mono">
             py<span className="text-accent">typing</span> v{APP_VERSION}
           </span>
@@ -67,7 +67,7 @@ export default function Footer({ hidden, onShowLegal }: FooterProps) {
           <button
             type="button"
             onClick={onShowLegal}
-            className="ml-auto text-content-secondary underline-offset-2 hover:text-accent hover:underline"
+            className="text-content-secondary underline-offset-2 hover:text-accent hover:underline"
           >
             About & legal
           </button>

@@ -112,8 +112,12 @@ export default function Home({ onSelectExercise }: HomeProps) {
       )}
 
       {/* Search */}
-      <div className="mb-5 relative">
+      <div className="relative mb-5">
+        <label htmlFor="exercise-search" className="sr-only">
+          Search exercises
+        </label>
         <input
+          id="exercise-search"
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

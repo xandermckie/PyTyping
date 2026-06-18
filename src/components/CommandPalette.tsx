@@ -109,16 +109,24 @@ export default function CommandPalette({ open, commands, onClose }: CommandPalet
           aria-label="Command search"
           className="w-full border-b border-border-tertiary bg-transparent px-4 py-3 text-sm text-content-primary outline-none"
         />
-        <ul className="max-h-72 overflow-y-auto py-1">
-          {cmdError && <li className="px-4 py-2 text-sm text-error">{cmdError}</li>}
+        <ul role="listbox" aria-label="Commands" className="max-h-72 overflow-y-auto py-1">
+          {cmdError && (
+            <li role="presentation" className="px-4 py-2 text-sm text-error">
+              {cmdError}
+            </li>
+          )}
           {filtered.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-content-tertiary">No matching commands</li>
+            <li role="presentation" className="px-4 py-3 text-sm text-content-tertiary">
+              No matching commands
+            </li>
           ) : (
             filtered.map((cmd, i) => (
-              <li key={cmd.id}>
+              <li key={cmd.id} role="presentation">
                 <button
                   type="button"
-                  // Hover highlights by syncing the active index (so mouse + kbd agree).
+                  id={`cmd-option-${cmd.id}`}
+                  role="option"
+                  aria-selected={i === active}
                   onMouseMove={() => setActive(i)}
                   onClick={() => runCommand(cmd)}
                   className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${

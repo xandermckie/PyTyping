@@ -137,14 +137,14 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
 
   return (
     <div className="w-full">
-      <div className="mx-auto mb-8 flex max-w-3xl items-center justify-between">
-        <div>
+      <div className="mx-auto mb-8 flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-lg font-medium text-content-primary">{exercise.title}</h1>
           <p className="text-sm text-content-tertiary">
             {exercise.difficulty} · {exercise.sourceLabel}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => {
@@ -152,7 +152,10 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
             }}
             className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
           >
-            Mode: {typingMode === 'guided' ? 'Guided' : 'Challenge'}
+            <span className="sm:hidden">{typingMode === 'guided' ? 'Guided' : 'Challenge'}</span>
+            <span className="hidden sm:inline">
+              Mode: {typingMode === 'guided' ? 'Guided' : 'Challenge'}
+            </span>
           </button>
           <button
             type="button"

@@ -10,6 +10,8 @@ interface LoginScreenProps {
   onDone: () => void;
   /** Continue without an account. */
   onGuest: () => void;
+  /** Open About & legal (optional — shown when provided by parent). */
+  onShowLegal?: () => void;
 }
 
 type Mode = 'login' | 'signup';
@@ -19,7 +21,7 @@ type Mode = 'login' | 'signup';
  * offers a local account so progress is saved on the device (and exportable)
  * instead of only living in this browser session.
  */
-export default function LoginScreen({ onDone, onGuest }: LoginScreenProps) {
+export default function LoginScreen({ onDone, onGuest, onShowLegal }: LoginScreenProps) {
   const { login, signup } = useSession();
   const [mode, setMode] = useState<Mode>('login');
   const [username, setUsername] = useState('');
@@ -158,6 +160,17 @@ export default function LoginScreen({ onDone, onGuest }: LoginScreenProps) {
           <button type="button" onClick={onGuest} className="text-sm text-content-secondary underline-offset-2 hover:underline">
             Continue as guest
           </button>
+          {onShowLegal && (
+            <p className="mt-3">
+              <button
+                type="button"
+                onClick={onShowLegal}
+                className="text-xs text-content-tertiary underline-offset-2 hover:text-content-secondary hover:underline"
+              >
+                About & legal
+              </button>
+            </p>
+          )}
           <p className="mt-3 text-xs text-content-tertiary">
             Accounts are stored locally on this device — there is no server. Guest progress is kept
             only for this browser session. Use Export backup in Settings to move data between devices.

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSession } from '../context/SessionContext';
 import { AVATAR_COLORS } from '../lib/auth';
 import { sanitizeHexColor } from '../lib/validation';
+import DisclosurePanel from './DisclosurePanel';
 
 interface AccountMenuProps {
   /** Open the login screen. */
@@ -31,13 +32,15 @@ function Avatar({ name, color }: { name: string; color: string }) {
 export default function AccountMenu({ onShowLogin, onManage }: AccountMenuProps) {
   const { isGuest, displayName, avatarColor, logout } = useSession();
   const [open, setOpen] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const firstItemRef = useRef<HTMLButtonElement>(null);
 
   if (isGuest) {
     return (
       <button
         type="button"
         onClick={onShowLogin}
-        className="flex items-center gap-2 rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
+        className="flex items-center gap-2 rounded-md border border-border-tertiary px-2.5 py-1.5 text-sm text-content-secondary hover:bg-background-secondary sm:px-3"
       >
         Log in
       </button>
@@ -47,9 +50,11 @@ export default function AccountMenu({ onShowLogin, onManage }: AccountMenuProps)
   return (
     <div className="relative">
       <button
+        ref={toggleRef}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-controls="account-menu"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
       >
@@ -57,43 +62,48 @@ export default function AccountMenu({ onShowLogin, onManage }: AccountMenuProps)
         <span className="hidden max-w-[8rem] truncate sm:inline">{displayName}</span>
       </button>
 
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
-          <div
-            role="menu"
-            aria-label="Account"
-            className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-lg border border-border-secondary bg-background-primary py-1"
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setOpen(false);
-            }}
-          >
-            <div className="px-3 py-2 text-xs text-content-tertiary">
-              Signed in as <span className="text-content-secondary">{displayName}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                onManage();
-              }}
-              className="w-full px-3 py-2 text-left text-sm text-content-primary hover:bg-background-secondary"
-            >
-              Account & settings
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                logout();
-              }}
-              className="w-full px-3 py-2 text-left text-sm text-content-secondary hover:bg-background-secondary"
-            >
-              Log out
-            </button>
+      <DisclosurePanel
+        open={open}
+        onClose={() => setOpen(false)}
+        returnFocusRef={toggleRef}
+        initialFocusRef={firstItemRef}
+        ariaLabel="Account"
+        panelClassName="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-lg border border-border-secondary bg-background-primary py-1 shadow-[var(--shadow-sm)]"
+      >
+        <div
+          id="account-menu"
+          role="menu"
+          aria-label="Account"
+          className="py-1"
+        >
+          <div className="px-3 py-2 text-xs text-content-tertiary" role="presentation">
+            Signed in as <span className="text-content-secondary">{displayName}</span>
           </div>
-        </>
-      )}
+          <button
+            ref={firstItemRef}
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onManage();
+            }}
+            className="w-full px-3 py-2 text-left text-sm text-content-primary hover:bg-background-secondary"
+          >
+            Account & settings
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              logout();
+            }}
+            className="w-full px-3 py-2 text-left text-sm text-content-secondary hover:bg-background-secondary"
+          >
+            Log out
+          </button>
+        </div>
+      </DisclosurePanel>
     </div>
   );
 }

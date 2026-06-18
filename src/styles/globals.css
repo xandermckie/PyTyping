@@ -114,6 +114,38 @@ pre,
   border-radius: 4px;
 }
 
+/* Skip link: hidden until keyboard focus (WCAG 2.4.1). */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+.skip-link:focus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 0.375rem;
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
 /* ---- Prism syntax token colors (we render our own spans, see highlight.ts) ---- */
 .token.comment,
 .token.prolog,

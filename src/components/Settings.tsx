@@ -145,7 +145,7 @@ export default function Settings({ onShowLogin }: SettingsProps) {
               Signed in as <span className="font-medium">{displayName}</span>
             </p>
             <p className="mt-1 text-xs text-content-tertiary">
-              Stored locally on this device. No cloud sync — use Export backup to move between devices.
+              Stored locally on this device. No cloud sync. Use Export backup to move between devices.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" onClick={logout} className={btnClass}>
