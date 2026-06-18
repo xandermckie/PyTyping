@@ -65,6 +65,11 @@ function AppShell() {
     setActiveId(id);
     setView('typing');
   }, []);
+  const startRace = useCallback((exerciseId: string, source: GhostSource) => {
+    setActiveId(exerciseId);
+    setRaceGhost({ exerciseId, source });
+    setView('race-run');
+  }, []);
   const goHome = useCallback(() => setView('home'), []);
 
   useEffect(() => {
@@ -156,6 +161,7 @@ function AppShell() {
               exerciseId={activeId}
               onExit={goHome}
               onSelectExercise={startExercise}
+              onStartRace={startRace}
               onFocusChange={setChromeHidden}
             />
           )}
@@ -164,15 +170,7 @@ function AppShell() {
           {view === 'about' && <AboutLegal />}
           {view === 'getting-started' && <GettingStarted />}
           {view === 'leaderboard' && <Leaderboard />}
-          {view === 'race' && (
-            <RaceLobby
-              onStartRace={(exerciseId, source) => {
-                setActiveId(exerciseId);
-                setRaceGhost({ exerciseId, source });
-                setView('race-run');
-              }}
-            />
-          )}
+          {view === 'race' && <RaceLobby onStartRace={startRace} />}
           {view === 'race-run' && activeId && raceGhost && (
             <RacePage
               key={`${activeId}-${JSON.stringify(raceGhost.source)}`}

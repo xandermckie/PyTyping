@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  REPLAY_MAX_BYTES,
   getGhostCursorAt,
   getGhostFinishMs,
   importGhostReplay,
@@ -56,6 +57,11 @@ describe('importGhostReplay', () => {
   it('rejects wrong app marker', () => {
     const json = JSON.stringify({ app: 'other', replay: SAMPLE });
     expect(importGhostReplay(json).ok).toBe(false);
+  });
+
+  it('rejects oversized files', () => {
+    const huge = 'x'.repeat(REPLAY_MAX_BYTES + 1);
+    expect(importGhostReplay(huge).ok).toBe(false);
   });
 });
 

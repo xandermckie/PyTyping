@@ -65,6 +65,8 @@ export default function Home({ onSelectExercise }: HomeProps) {
           <span aria-hidden="true" className="text-border-secondary">·</span>
           <span>{topics.length} topics</span>
           <span aria-hidden="true" className="text-border-secondary">·</span>
+          <span>Ghost race &amp; Pomodoro in the nav</span>
+          <span aria-hidden="true" className="text-border-secondary">·</span>
           <span>
             press{' '}
             <kbd className="rounded border border-border-tertiary bg-background-secondary px-1.5 py-0.5 font-mono text-content-secondary">

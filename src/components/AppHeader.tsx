@@ -95,7 +95,7 @@ export default function AppHeader({
           {/* Desktop nav */}
           <nav className="hidden gap-0.5 md:flex" aria-label="Primary">
             {PRIMARY_NAV.map((item) => {
-              const active = view === item.id;
+              const active = view === item.id || (item.id === 'race' && view === 'race-run');
               return (
                 <button
                   key={item.id}
@@ -147,7 +147,7 @@ export default function AppHeader({
         <nav id="mobile-nav-panel" className="mx-auto max-w-5xl px-4 py-2 sm:px-6" aria-label="Primary">
           <ul className="flex flex-col gap-0.5 py-1">
             {mobileNavItems.map((item, index) => {
-              const active = view === item.id;
+              const active = view === item.id || (item.id === 'race' && view === 'race-run');
               return (
                 <li key={item.id}>
                   <button

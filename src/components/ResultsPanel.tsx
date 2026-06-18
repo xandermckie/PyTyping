@@ -7,6 +7,8 @@ interface ResultsPanelProps {
   previous: AttemptSummary | null;
   onRestart: () => void;
   onContinue: () => void;
+  onRace?: () => void;
+  showRaceButton?: boolean;
 }
 
 function BigMetric({ value, label }: { value: string; label: string }) {
@@ -43,7 +45,14 @@ function Delta({ delta, unit, higherIsBetter = true }: { delta: number; unit: st
   );
 }
 
-export default function ResultsPanel({ stats, previous, onRestart, onContinue }: ResultsPanelProps) {
+export default function ResultsPanel({
+  stats,
+  previous,
+  onRestart,
+  onContinue,
+  onRace,
+  showRaceButton = false,
+}: ResultsPanelProps) {
   const continueRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     continueRef.current?.focus();
@@ -89,7 +98,7 @@ export default function ResultsPanel({ stats, previous, onRestart, onContinue }:
       </div>
 
       {/* Actions */}
-      <div className="mt-8 flex gap-3">
+      <div className="mt-8 flex flex-wrap gap-3">
         <button
           ref={continueRef}
           type="button"
@@ -98,6 +107,15 @@ export default function ResultsPanel({ stats, previous, onRestart, onContinue }:
         >
           Continue to quiz →
         </button>
+        {showRaceButton && onRace && (
+          <button
+            type="button"
+            onClick={onRace}
+            className="rounded-md border border-accent bg-[var(--color-accent-subtle)] px-5 py-2.5 text-sm font-medium text-accent hover:bg-background-secondary"
+          >
+            Race this run
+          </button>
+        )}
         <button
           type="button"
           onClick={onRestart}

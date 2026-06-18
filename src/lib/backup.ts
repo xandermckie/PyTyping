@@ -23,44 +23,115 @@ import {
   validateProgressMap,
 } from './progress';
 import type { HistoryMap, ProgressMap } from './progress';
+import {
+  clearAllReplays,
+  exportReplayStore,
+  getFriendGhosts,
+  importReplayStore,
+  saveFriendGhosts,
+  validateTypingReplay,
+} from './replays';
+import type { ReplayStore } from './replays';
+import {
+  clearRaceRank,
+  getRaceRankState,
+  importRaceRankState,
+  validateRaceRankState,
+} from './race-rank';
+import type { RaceRankState } from './race-rank';
 import { SETTINGS_KEY, validateSettings } from './settings';
 import type { Settings } from './settings';
 import { loadValidated, removeKey, saveJSON } from './storage';
 import { isObject, isString } from './validation';
+import type { FriendGhost } from '../types/replay';
 
 /** Maximum backup file size accepted on import (2 MB). */
 export const BACKUP_MAX_BYTES = 2 * 1024 * 1024;
 
-const SUPPORTED_BACKUP_VERSION = 2;
+const SUPPORTED_BACKUP_VERSION = 3;
+const LEGACY_BACKUP_VERSIONS = [2, 3] as const;
 
-interface Backup {
+interface BackupV3 {
   app: 'pytyping';
-  version: 2;
+  version: 3;
   exportedAt: string;
   accounts: Account[];
   session: Session;
   progress: Record<string, ProgressMap>;
   history: Record<string, HistoryMap>;
   settings: Settings;
+  replays: Record<string, ReplayStore>;
+  friendGhosts: FriendGhost[];
+  raceRanks: Record<string, RaceRankState>;
+}
+
+function validateReplayStoreMap(raw: unknown): Record<string, ReplayStore> {
+  if (!isObject(raw)) return {};
+  const out: Record<string, ReplayStore> = {};
+  for (const [profileId, store] of Object.entries(raw)) {
+    if (!isObject(store)) continue;
+    const validated: ReplayStore = {};
+    for (const [exerciseId, list] of Object.entries(store)) {
+      if (!Array.isArray(list)) continue;
+      const replays = list.map(validateTypingReplay).filter((r) => r !== null);
+      if (replays.length) validated[exerciseId] = replays;
+    }
+    if (Object.keys(validated).length) out[profileId] = validated;
+  }
+  return out;
+}
+
+function validateFriendGhostsList(raw: unknown): FriendGhost[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => {
+      if (!isObject(item) || !isString(item.id) || !isString(item.displayName)) return null;
+      if (!Array.isArray(item.replays)) return null;
+      const replays = item.replays.map(validateTypingReplay).filter((r) => r !== null);
+      if (replays.length === 0) return null;
+      return {
+        id: item.id,
+        displayName: item.displayName,
+        importedAt: isString(item.importedAt) ? item.importedAt : new Date().toISOString(),
+        replays,
+      } satisfies FriendGhost;
+    })
+    .filter((f): f is FriendGhost => f !== null);
+}
+
+function validateRaceRankMap(raw: unknown): Record<string, RaceRankState> {
+  if (!isObject(raw)) return {};
+  const out: Record<string, RaceRankState> = {};
+  for (const [profileId, state] of Object.entries(raw)) {
+    out[profileId] = validateRaceRankState(state);
+  }
+  return out;
 }
 
 export function exportBackup(): string {
   const accounts = loadAccounts();
   const progress: Record<string, ProgressMap> = {};
   const history: Record<string, HistoryMap> = {};
+  const replays: Record<string, ReplayStore> = {};
+  const raceRanks: Record<string, RaceRankState> = {};
   for (const a of accounts) {
     progress[a.id] = getProgress(a.id);
     history[a.id] = getHistory(a.id);
+    replays[a.id] = exportReplayStore(a.id);
+    raceRanks[a.id] = getRaceRankState(a.id);
   }
-  const backup: Backup = {
+  const backup: BackupV3 = {
     app: 'pytyping',
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     accounts,
     session: getSession(),
     progress,
     history,
     settings: loadValidated(SETTINGS_KEY, validateSettings),
+    replays,
+    friendGhosts: getFriendGhosts(),
+    raceRanks,
   };
   return JSON.stringify(backup, null, 2);
 }
@@ -77,7 +148,8 @@ export function importBackup(text: string): ImportResult {
   if (!isObject(parsed) || parsed.app !== 'pytyping') {
     return { ok: false, error: 'This does not look like a PyTyping backup.' };
   }
-  if (parsed.version !== undefined && parsed.version !== SUPPORTED_BACKUP_VERSION) {
+  const version = parsed.version;
+  if (version !== undefined && !LEGACY_BACKUP_VERSIONS.includes(version as 2 | 3)) {
     return { ok: false, error: `Unsupported backup version (expected ${SUPPORTED_BACKUP_VERSION}).` };
   }
 
@@ -86,10 +158,15 @@ export function importBackup(text: string): ImportResult {
   const rawProgress = isObject(parsed.progress) ? parsed.progress : {};
   const rawHistory = isObject(parsed.history) ? parsed.history : {};
   const settings = validateSettings(parsed.settings);
+  const rawReplays = version === 3 ? validateReplayStoreMap(parsed.replays) : {};
+  const friendGhosts = version === 3 ? validateFriendGhostsList(parsed.friendGhosts) : [];
+  const rawRaceRanks = version === 3 ? validateRaceRankMap(parsed.raceRanks) : {};
 
-  // Drop progress for accounts that won't survive the import.
   for (const existing of loadAccounts()) {
-    if (!ids.has(existing.id)) clearProgress(existing.id);
+    if (!ids.has(existing.id)) {
+      clearProgress(existing.id);
+      clearRaceRank(existing.id);
+    }
   }
 
   if (!saveAccounts(accounts)) {
@@ -105,9 +182,20 @@ export function importBackup(text: string): ImportResult {
     if (!setHistory(a.id, validateHistoryMap((rawHistory as Record<string, unknown>)[a.id]))) {
       return { ok: false, error: 'Could not save imported history. Storage may be full or disabled.' };
     }
+    if (rawReplays[a.id] && !importReplayStore(a.id, rawReplays[a.id])) {
+      return { ok: false, error: 'Could not save imported replays. Storage may be full or disabled.' };
+    }
+    if (rawRaceRanks[a.id]) {
+      if (!importRaceRankState(a.id, rawRaceRanks[a.id])) {
+        return { ok: false, error: 'Could not save imported race ranks. Storage may be full or disabled.' };
+      }
+    }
   }
 
-  // Restore session only if it points at an imported account.
+  if (version === 3 && !saveFriendGhosts(friendGhosts)) {
+    return { ok: false, error: 'Could not save imported friend ghosts. Storage may be full or disabled.' };
+  }
+
   const session = parsed.session;
   if (isObject(session) && session.kind === 'account' && isString(session.accountId) && ids.has(session.accountId)) {
     if (!setSession({ kind: 'account', accountId: session.accountId })) {
@@ -121,7 +209,12 @@ export function importBackup(text: string): ImportResult {
 
 /** Wipe everything PyTyping stored: accounts, sessions, settings, all progress. */
 export function clearAllData(): void {
+  const accounts = loadAccounts();
   clearAccountsAndSession();
   clearProgress('guest');
+  clearAllReplays(accounts.map((a) => a.id));
+  clearRaceRank('guest');
+  for (const a of accounts) clearRaceRank(a.id);
+  removeKey('friend-ghosts');
   removeKey(SETTINGS_KEY);
 }

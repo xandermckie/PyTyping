@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import TypingInput from '../components/TypingInput';
 import RaceResultsPanel from '../components/RaceResultsPanel';
 import { getExerciseById } from '../lib/exercises';
+import { recordRaceResult } from '../lib/race-rank';
 import {
   buildReplay,
   codeLength,
@@ -25,18 +26,27 @@ type Phase = 'racing' | 'results';
 
 export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChange }: RacePageProps) {
   const exercise = getExerciseById(exerciseId);
-  const { scopeId, displayName } = useSession();
+  const { scopeId, displayName, notifyReplayChange } = useSession();
   const ghost = useMemo(() => resolveGhost(ghostSource), [ghostSource]);
   const [phase, setPhase] = useState<Phase>('racing');
   const [stats, setStats] = useState<TypingStats | null>(null);
   const [savedReplay, setSavedReplay] = useState<TypingReplay | null>(null);
+  const [rankResult, setRankResult] = useState<ReturnType<typeof recordRaceResult> | null>(null);
+  const [ghostFinishedFirst, setGhostFinishedFirst] = useState(false);
   const [restartKey, setRestartKey] = useState(0);
   const playerFinishMsRef = useRef(0);
   const lastEventsRef = useRef<ReplayEvent[]>([]);
+  const ghostFinishedRef = useRef(false);
 
   const handleReplayReady = useCallback((events: ReplayEvent[]) => {
     lastEventsRef.current = events;
     if (events.length > 0) playerFinishMsRef.current = events[events.length - 1].ms;
+  }, []);
+
+  const handleGhostFinished = useCallback(() => {
+    if (ghostFinishedRef.current) return;
+    ghostFinishedRef.current = true;
+    setGhostFinishedFirst(true);
   }, []);
 
   const handleComplete = useCallback(
@@ -52,16 +62,21 @@ export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChang
         accuracy: typingStats.accuracy,
       });
       saveReplay(scopeId, replay);
+      notifyReplayChange();
+      setRankResult(recordRaceResult(scopeId, typingStats.wpm));
       setSavedReplay(replay);
       setPhase('results');
       onFocusChange?.(false);
     },
-    [exercise, displayName, scopeId, onFocusChange],
+    [exercise, displayName, scopeId, onFocusChange, notifyReplayChange],
   );
 
   const handleRematch = useCallback(() => {
     setStats(null);
     setSavedReplay(null);
+    setRankResult(null);
+    setGhostFinishedFirst(false);
+    ghostFinishedRef.current = false;
     lastEventsRef.current = [];
     playerFinishMsRef.current = 0;
     setRestartKey((k) => k + 1);
@@ -104,12 +119,14 @@ export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChang
     );
   }
 
-  if (phase === 'results' && stats) {
+  if (phase === 'results' && stats && rankResult) {
     return (
       <RaceResultsPanel
         stats={stats}
         ghost={ghost}
         playerFinishMs={playerFinishMsRef.current}
+        rank={rankResult.newRank}
+        rankedUp={rankResult.rankedUp}
         onRematch={handleRematch}
         onLobby={onExit}
         onExportGhost={handleExport}
@@ -133,12 +150,26 @@ export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChang
           Exit
         </button>
       </div>
+      {ghostFinishedFirst && (
+        <div className="mx-auto mb-4 flex max-w-3xl items-center justify-between gap-3 rounded-lg border border-[var(--color-warning,#e8a838)] bg-background-secondary px-4 py-3 text-sm text-content-primary">
+          <span>The ghost finished first — keep typing to beat their time!</span>
+          <button
+            type="button"
+            onClick={() => setGhostFinishedFirst(false)}
+            className="shrink-0 text-content-tertiary hover:text-content-secondary"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
       <TypingInput
         key={restartKey}
         code={exercise.code}
         ghostReplay={ghost}
         recordReplay
         onReplayReady={handleReplayReady}
+        onGhostFinished={handleGhostFinished}
         onComplete={handleComplete}
         onQuit={onExit}
         onRestart={handleRematch}

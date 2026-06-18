@@ -32,6 +32,8 @@ interface SessionContextValue {
   removeAccount: (id: string) => void;
   progressVersion: number;
   notifyProgressChange: () => void;
+  replayVersion: number;
+  notifyReplayChange: () => void;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -47,7 +49,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return s;
   });
   const [progressVersion, setProgressVersion] = useState(0);
+  const [replayVersion, setReplayVersion] = useState(0);
   const bump = useCallback(() => setProgressVersion((v) => v + 1), []);
+  const bumpReplay = useCallback(() => setReplayVersion((v) => v + 1), []);
 
   const account = useMemo(
     () => (session.kind === 'account' ? accounts.find((a) => a.id === session.accountId) ?? null : null),
@@ -141,8 +145,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       removeAccount,
       progressVersion,
       notifyProgressChange: bump,
+      replayVersion,
+      notifyReplayChange: bumpReplay,
     };
-  }, [account, session, accounts, login, signup, logout, removeAccount, progressVersion, bump]);
+  }, [account, session, accounts, login, signup, logout, removeAccount, progressVersion, bump, replayVersion, bumpReplay]);
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

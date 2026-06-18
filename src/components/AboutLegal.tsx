@@ -100,6 +100,10 @@ export default function AboutLegal() {
             exercise source code. Importing a friend&apos;s ghost is a user-initiated file upload;
             PyTyping does not fetch ghosts from the network.
           </p>
+          <p className="mt-3">
+            Backups (Settings → Export) include ghost replays, friend imports, and race rank stats alongside
+            progress and accounts.
+          </p>
         </Section>
 
         <Section title="Accessibility">

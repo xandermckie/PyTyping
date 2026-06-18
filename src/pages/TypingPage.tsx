@@ -7,7 +7,7 @@ import CodePeekPanel from '../components/CodePeekPanel';
 import { EXERCISES, getExerciseById } from '../lib/exercises';
 import { getAttempts, getHistory, getProgress, recordCompletion } from '../lib/progress';
 import type { AttemptSummary } from '../lib/progress';
-import { buildReplay, saveReplay } from '../lib/replays';
+import { buildReplay, getBestReplay, saveReplay } from '../lib/replays';
 import { useSession } from '../context/SessionContext';
 import { useSettings } from '../context/SettingsContext';
 import type { ReplayEvent } from '../types/replay';
@@ -18,6 +18,7 @@ interface TypingPageProps {
   exerciseId: string;
   onExit: () => void;
   onSelectExercise: (id: string) => void;
+  onStartRace?: (exerciseId: string, source: import('../types/replay').GhostSource) => void;
   /** Bubble typing-focus up so the app shell can fade its chrome (zen mode). */
   onFocusChange?: (focused: boolean) => void;
 }
@@ -46,9 +47,15 @@ function buildChallengePrompt(code: string): string {
  * saved (per active profile) once the quiz completes. The parent keys this
  * component on exerciseId, so picking a new exercise remounts it fresh.
  */
-export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFocusChange }: TypingPageProps) {
+export default function TypingPage({
+  exerciseId,
+  onExit,
+  onSelectExercise,
+  onStartRace,
+  onFocusChange,
+}: TypingPageProps) {
   const exercise = getExerciseById(exerciseId);
-  const { scopeId, displayName, notifyProgressChange } = useSession();
+  const { scopeId, displayName, notifyProgressChange, notifyReplayChange } = useSession();
   const { settings } = useSettings();
   const lastReplayEventsRef = useRef<ReplayEvent[]>([]);
   const [phase, setPhase] = useState<Phase>('typing');
@@ -61,6 +68,7 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
   const [saveWarning, setSaveWarning] = useState<string | null>(null);
   const [typingMode, setTypingMode] = useState<TypingMode>('guided');
   const [hintOpen, setHintOpen] = useState(false);
+  const [savedReplayId, setSavedReplayId] = useState<string | null>(null);
 
   const challengePrompt = useMemo(
     () => (exercise ? buildChallengePrompt(exercise.code) : ''),
@@ -91,17 +99,17 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
     (stats: TypingStats) => {
       if (!exercise) return;
       if (settings.recordReplays && lastReplayEventsRef.current.length > 0) {
-        saveReplay(
-          scopeId,
-          buildReplay({
-            exerciseId: exercise.id,
-            code: exercise.code,
-            playerName: displayName,
-            events: lastReplayEventsRef.current,
-            wpm: stats.wpm,
-            accuracy: stats.accuracy,
-          }),
-        );
+        const replay = buildReplay({
+          exerciseId: exercise.id,
+          code: exercise.code,
+          playerName: displayName,
+          events: lastReplayEventsRef.current,
+          wpm: stats.wpm,
+          accuracy: stats.accuracy,
+        });
+        saveReplay(scopeId, replay);
+        notifyReplayChange();
+        setSavedReplayId(replay.id);
       }
       // Snapshot the prior attempt BEFORE the new one is recorded (after the
       // quiz), so the results screen compares against the right baseline.
@@ -110,8 +118,15 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
       setTypingStats(stats);
       setPhase('results');
     },
-    [scopeId, exercise, displayName, settings.recordReplays],
+    [scopeId, exercise, displayName, settings.recordReplays, notifyReplayChange],
   );
+
+  const handleRaceThisRun = useCallback(() => {
+    if (!exercise || !onStartRace) return;
+    const replayId = savedReplayId ?? getBestReplay(scopeId, exercise.id)?.id;
+    if (!replayId) return;
+    onStartRace(exercise.id, { kind: 'self', profileId: scopeId, replayId });
+  }, [exercise, onStartRace, savedReplayId, scopeId]);
 
   const handleRestart = useCallback(() => {
     lastReplayEventsRef.current = [];
@@ -228,6 +243,8 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
           previous={previous}
           onRestart={handleRestart}
           onContinue={() => setPhase('quiz')}
+          onRace={onStartRace ? handleRaceThisRun : undefined}
+          showRaceButton={settings.recordReplays && Boolean(savedReplayId ?? getBestReplay(scopeId, exercise.id))}
         />
       )}
 

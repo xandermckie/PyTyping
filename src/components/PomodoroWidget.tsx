@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { formatPomodoroTime } from '../lib/pomodoro';
 import { usePomodoro } from '../context/PomodoroContext';
 
@@ -6,8 +7,17 @@ interface PomodoroWidgetProps {
 }
 
 export default function PomodoroWidget({ chromeHidden = false }: PomodoroWidgetProps) {
-  const { phase, runState, secondsLeft, minimized, phaseLabel, start, pause, reset, toggleMinimized } =
+  const { phase, runState, secondsLeft, minimized, phaseLabel, start, pause, reset, setMinimized } =
     usePomodoro();
+  const autoMinimizedRef = useRef(false);
+
+  useEffect(() => {
+    if (chromeHidden && !minimized && !autoMinimizedRef.current) {
+      autoMinimizedRef.current = true;
+      setMinimized(true);
+    }
+    if (!chromeHidden) autoMinimizedRef.current = false;
+  }, [chromeHidden, minimized, setMinimized]);
 
   if (chromeHidden && minimized) return null;
 
@@ -19,7 +29,7 @@ export default function PomodoroWidget({ chromeHidden = false }: PomodoroWidgetP
     return (
       <button
         type="button"
-        onClick={toggleMinimized}
+        onClick={() => setMinimized(false)}
         className="pointer-events-auto fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border border-border-tertiary bg-background-primary px-4 py-2 text-sm shadow-[var(--shadow-md)]"
         role="timer"
         aria-label={`${phaseLabel} timer, ${timeLabel}`}
@@ -44,7 +54,7 @@ export default function PomodoroWidget({ chromeHidden = false }: PomodoroWidgetP
         <span className="text-xs font-medium uppercase tracking-wider text-content-tertiary">{phaseLabel}</span>
         <button
           type="button"
-          onClick={toggleMinimized}
+          onClick={() => setMinimized(true)}
           className="text-xs text-content-tertiary hover:text-content-secondary"
           aria-label="Minimize timer"
         >

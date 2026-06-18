@@ -1,6 +1,8 @@
-import { loadValidated, saveJSON } from './storage';
+import { loadValidated, removeKey, saveJSON } from './storage';
 import { clampNumber, isNumber, isObject, isString } from './validation';
-import type { FriendGhost, ReplayEvent, TypingReplay } from '../types/replay';
+import { getExerciseById } from './exercises';
+import { buildSyntheticReplay } from './synthetic-ghosts';
+import type { FriendGhost, GhostSource, ReplayEvent, TypingReplay } from '../types/replay';
 
 export const REPLAY_MAX_BYTES = 100 * 1024;
 export const REPLAYS_PER_EXERCISE_CAP = 10;
@@ -59,6 +61,8 @@ export function validateTypingReplay(raw: unknown): TypingReplay | null {
 
 type ReplayStore = Record<string, TypingReplay[]>;
 
+export type { ReplayStore };
+
 function validateReplayStore(raw: unknown): ReplayStore {
   if (!isObject(raw)) return {};
   const out: ReplayStore = {};
@@ -91,6 +95,53 @@ export function saveReplay(profileId: string, replay: TypingReplay): boolean {
   const list = store[replay.exerciseId] ?? [];
   store[replay.exerciseId] = [...list.filter((r) => r.id !== replay.id), replay].slice(-REPLAYS_PER_EXERCISE_CAP);
   return saveJSON(replaysKey(profileId), store, pickStore(profileId));
+}
+
+export function deleteReplay(profileId: string, exerciseId: string, replayId: string): boolean {
+  const store = getAllReplays(profileId);
+  const list = store[exerciseId];
+  if (!list) return false;
+  const next = list.filter((r) => r.id !== replayId);
+  if (next.length === list.length) return false;
+  if (next.length === 0) delete store[exerciseId];
+  else store[exerciseId] = next;
+  return saveJSON(replaysKey(profileId), store, pickStore(profileId));
+}
+
+export function getBestReplay(profileId: string, exerciseId: string): TypingReplay | undefined {
+  const replays = getReplays(profileId, exerciseId);
+  if (replays.length === 0) return undefined;
+  return [...replays].sort((a, b) => {
+    if (b.wpm !== a.wpm) return b.wpm - a.wpm;
+    return getGhostFinishMs(a) - getGhostFinishMs(b);
+  })[0];
+}
+
+export function clearReplays(profileId: string): void {
+  removeKey(replaysKey(profileId), pickStore(profileId));
+}
+
+export function clearAllReplays(accountIds: string[]): void {
+  clearReplays('guest');
+  for (const id of accountIds) clearReplays(id);
+}
+
+export function exportReplayStore(profileId: string): ReplayStore {
+  return getAllReplays(profileId);
+}
+
+export function importReplayStore(profileId: string, store: ReplayStore): boolean {
+  return saveJSON(replaysKey(profileId), validateReplayStore(store), pickStore(profileId));
+}
+
+function normalizeFriendName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function mergeFriendReplays(existing: TypingReplay[], incoming: TypingReplay): TypingReplay[] {
+  const byId = new Map(existing.map((r) => [r.id, r]));
+  byId.set(incoming.id, incoming);
+  return [...byId.values()];
 }
 
 export function buildReplay(params: {
@@ -205,25 +256,45 @@ export function importGhostReplay(text: string): ImportGhostResult {
 export function importFriendGhostBundle(text: string, displayName: string): ImportGhostResult & { friend?: FriendGhost } {
   const result = importGhostReplay(text);
   if (!result.ok) return result;
-  const friend: FriendGhost = {
-    id: newReplayId(),
-    displayName: displayName.trim() || result.replay.playerName,
-    importedAt: new Date().toISOString(),
-    replays: [result.replay],
-  };
-  if (!addFriendGhost(friend)) {
-    return { ok: false, error: 'Could not save imported friend ghost.' };
+  const name = displayName.trim() || result.replay.playerName;
+  const normalized = normalizeFriendName(name);
+  const friends = getFriendGhosts();
+  const existing = friends.find((f) => normalizeFriendName(f.displayName) === normalized);
+  let friend: FriendGhost;
+  if (existing) {
+    friend = {
+      ...existing,
+      replays: mergeFriendReplays(existing.replays, result.replay),
+    };
+    if (!saveFriendGhosts(friends.map((f) => (f.id === existing.id ? friend : f)))) {
+      return { ok: false, error: 'Could not save imported friend ghost.' };
+    }
+  } else {
+    friend = {
+      id: newReplayId(),
+      displayName: name,
+      importedAt: new Date().toISOString(),
+      replays: [result.replay],
+    };
+    if (!addFriendGhost(friend)) {
+      return { ok: false, error: 'Could not save imported friend ghost.' };
+    }
   }
   return { ok: true, replay: result.replay, friend };
 }
 
-export function resolveGhost(source: import('../types/replay').GhostSource): TypingReplay | undefined {
+export function resolveGhost(source: GhostSource): TypingReplay | undefined {
   switch (source.kind) {
     case 'self':
     case 'account':
       return getReplayById(source.profileId, source.replayId);
     case 'friend':
       return getFriendReplay(source.friendId, source.replayId);
+    case 'builtin': {
+      const exercise = getExerciseById(source.exerciseId);
+      if (!exercise) return undefined;
+      return buildSyntheticReplay(source.exerciseId, codeLength(exercise.code), source.tier);
+    }
     default:
       return undefined;
   }

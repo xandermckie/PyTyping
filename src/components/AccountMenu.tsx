@@ -1,5 +1,7 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import RankBadge from './RankBadge';
 import { useSession } from '../context/SessionContext';
+import { getRaceRankState } from '../lib/race-rank';
 import { AVATAR_COLORS } from '../lib/auth';
 import { sanitizeHexColor } from '../lib/validation';
 import DisclosurePanel from './DisclosurePanel';
@@ -30,7 +32,11 @@ function Avatar({ name, color }: { name: string; color: string }) {
  * their name with a menu to open Settings or log out. Local-only — no server.
  */
 export default function AccountMenu({ onShowLogin, onManage }: AccountMenuProps) {
-  const { isGuest, displayName, avatarColor, logout } = useSession();
+  const { isGuest, displayName, avatarColor, logout, scopeId, replayVersion } = useSession();
+  const peakRaceWpm = useMemo(
+    () => getRaceRankState(scopeId).peakRaceWpm,
+    [scopeId, replayVersion],
+  );
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const firstItemRef = useRef<HTMLButtonElement>(null);
@@ -60,6 +66,9 @@ export default function AccountMenu({ onShowLogin, onManage }: AccountMenuProps)
       >
         <Avatar name={displayName} color={avatarColor} />
         <span className="hidden max-w-[8rem] truncate sm:inline">{displayName}</span>
+        <span className="hidden sm:inline">
+          <RankBadge wpm={peakRaceWpm} />
+        </span>
       </button>
 
       <DisclosurePanel

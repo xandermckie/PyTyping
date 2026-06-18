@@ -23,6 +23,9 @@ export interface Settings {
   caretBlink: boolean;
   /** Save typing replays for ghost racing (race mode always records). */
   recordReplays: boolean;
+  pomodoroFocusMinutes: number;
+  pomodoroBreakMinutes: number;
+  pomodoroNotifications: boolean;
 }
 
 // Premade code fonts. The first family in each stack is loaded from Google
@@ -61,6 +64,9 @@ export const DEFAULT_SETTINGS: Settings = {
   liveWpm: true,
   caretBlink: true,
   recordReplays: true,
+  pomodoroFocusMinutes: 25,
+  pomodoroBreakMinutes: 5,
+  pomodoroNotifications: false,
 };
 
 /** Coerce anything (storage, imported backup) into a safe, complete Settings. */
@@ -90,5 +96,12 @@ export function validateSettings(raw: unknown): Settings {
   if (isBoolean(raw.liveWpm)) out.liveWpm = raw.liveWpm;
   if (isBoolean(raw.caretBlink)) out.caretBlink = raw.caretBlink;
   if (isBoolean(raw.recordReplays)) out.recordReplays = raw.recordReplays;
+  if (isNumber(raw.pomodoroFocusMinutes)) {
+    out.pomodoroFocusMinutes = Math.min(90, Math.max(5, Math.round(raw.pomodoroFocusMinutes)));
+  }
+  if (isNumber(raw.pomodoroBreakMinutes)) {
+    out.pomodoroBreakMinutes = Math.min(30, Math.max(1, Math.round(raw.pomodoroBreakMinutes)));
+  }
+  if (isBoolean(raw.pomodoroNotifications)) out.pomodoroNotifications = raw.pomodoroNotifications;
   return out;
 }

@@ -20,6 +20,23 @@ vi.mock('../progress', async (importOriginal) => {
   };
 });
 
+vi.mock('../replays', () => ({
+  getAllReplays: vi.fn(() => ({})),
+  exportReplayStore: vi.fn(() => ({})),
+  importReplayStore: vi.fn(() => true),
+  getFriendGhosts: vi.fn(() => []),
+  saveFriendGhosts: vi.fn(() => true),
+  clearAllReplays: vi.fn(),
+  validateTypingReplay: vi.fn(),
+}));
+
+vi.mock('../race-rank', () => ({
+  getRaceRankState: vi.fn(() => ({ peakRaceWpm: 0, racesCompleted: 0, lastRaceAt: '' })),
+  importRaceRankState: vi.fn(() => true),
+  clearRaceRank: vi.fn(),
+  validateRaceRankState: vi.fn((raw: unknown) => raw ?? { peakRaceWpm: 0, racesCompleted: 0, lastRaceAt: '' }),
+}));
+
 describe('importBackup', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -41,8 +58,13 @@ describe('importBackup', () => {
       importBackup(JSON.stringify({ app: 'pytyping', version: 99, accounts: [] })),
     ).toEqual({
       ok: false,
-      error: 'Unsupported backup version (expected 2).',
+      error: 'Unsupported backup version (expected 3).',
     });
+  });
+
+  it('accepts v2 backups', () => {
+    const result = importBackup(JSON.stringify({ app: 'pytyping', version: 2, accounts: [] }));
+    expect(result).toEqual({ ok: true });
   });
 
   it('accepts missing version for legacy backups', () => {

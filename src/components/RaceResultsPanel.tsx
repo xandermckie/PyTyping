@@ -1,12 +1,16 @@
 import { useEffect, useRef } from 'react';
+import RankBadge from './RankBadge';
 import type { TypingReplay } from '../types/replay';
 import type { TypingStats } from '../types/exercise';
 import { getGhostFinishMs } from '../lib/replays';
+import { rankLabel, type RaceRank } from '../lib/race-rank';
 
 interface RaceResultsPanelProps {
   stats: TypingStats;
   ghost: TypingReplay;
   playerFinishMs: number;
+  rank: RaceRank;
+  rankedUp: boolean;
   onRematch: () => void;
   onLobby: () => void;
   onExportGhost: () => void;
@@ -16,6 +20,8 @@ export default function RaceResultsPanel({
   stats,
   ghost,
   playerFinishMs,
+  rank,
+  rankedUp,
   onRematch,
   onLobby,
   onExportGhost,
@@ -37,6 +43,16 @@ export default function RaceResultsPanel({
       <p className="mt-2 text-sm text-content-secondary">
         vs {ghost.playerName} · {ghost.wpm} wpm · {ghost.accuracy}% acc
       </p>
+
+      {rankedUp && (
+        <p className="mt-4 rounded-lg border border-accent bg-[var(--color-accent-subtle)] px-4 py-3 text-sm font-medium text-accent">
+          Rank up! You reached {rankLabel(rank)}.
+        </p>
+      )}
+
+      <div className="mt-4">
+        <RankBadge wpm={stats.wpm} showWpm />
+      </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <ResultCard

@@ -9,6 +9,16 @@ export const BREAK_SECONDS = 5 * 60;
 
 export const POMODORO_KEY = 'pomodoro';
 
+export interface PomodoroConfig {
+  focusSeconds: number;
+  breakSeconds: number;
+}
+
+export const DEFAULT_POMODORO_CONFIG: PomodoroConfig = {
+  focusSeconds: FOCUS_SECONDS,
+  breakSeconds: BREAK_SECONDS,
+};
+
 export interface PomodoroState {
   phase: PomodoroPhase;
   runState: PomodoroRunState;
@@ -45,8 +55,8 @@ export function savePomodoroState(state: PomodoroState): boolean {
   return saveJSON(POMODORO_KEY, state);
 }
 
-export function phaseDuration(phase: PomodoroPhase): number {
-  return phase === 'focus' ? FOCUS_SECONDS : BREAK_SECONDS;
+export function phaseDuration(phase: PomodoroPhase, config: PomodoroConfig = DEFAULT_POMODORO_CONFIG): number {
+  return phase === 'focus' ? config.focusSeconds : config.breakSeconds;
 }
 
 export function formatPomodoroTime(seconds: number): string {
@@ -56,7 +66,10 @@ export function formatPomodoroTime(seconds: number): string {
 }
 
 /** Advance timer by one second; returns new state and whether phase flipped. */
-export function tickPomodoro(state: PomodoroState): { next: PomodoroState; phaseComplete: boolean } {
+export function tickPomodoro(
+  state: PomodoroState,
+  config: PomodoroConfig = DEFAULT_POMODORO_CONFIG,
+): { next: PomodoroState; phaseComplete: boolean } {
   if (state.runState !== 'running' || state.secondsLeft <= 0) {
     return { next: state, phaseComplete: false };
   }
@@ -69,18 +82,21 @@ export function tickPomodoro(state: PomodoroState): { next: PomodoroState; phase
     next: {
       ...state,
       phase: nextPhase,
-      secondsLeft: phaseDuration(nextPhase),
+      secondsLeft: phaseDuration(nextPhase, config),
       runState: 'running',
     },
     phaseComplete: true,
   };
 }
 
-export function resetPomodoro(state: PomodoroState): PomodoroState {
+export function resetPomodoro(
+  state: PomodoroState,
+  config: PomodoroConfig = DEFAULT_POMODORO_CONFIG,
+): PomodoroState {
   return {
     ...state,
     runState: 'idle',
-    secondsLeft: phaseDuration(state.phase),
+    secondsLeft: phaseDuration(state.phase, config),
   };
 }
 
@@ -88,7 +104,9 @@ export function phaseLabel(phase: PomodoroPhase): string {
   return phase === 'focus' ? 'Focus' : 'Break';
 }
 
-/** @internal For tests — guard against corrupted storage strings. */
-export function isValidPhase(value: string): value is PomodoroPhase {
-  return value === 'focus' || value === 'break';
+export function pomodoroConfigFromMinutes(focusMinutes: number, breakMinutes: number): PomodoroConfig {
+  return {
+    focusSeconds: Math.max(5, Math.min(90, Math.round(focusMinutes))) * 60,
+    breakSeconds: Math.max(1, Math.min(30, Math.round(breakMinutes))) * 60,
+  };
 }

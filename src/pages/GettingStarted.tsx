@@ -67,6 +67,30 @@ export default function GettingStarted() {
       </section>
 
       <section className="space-y-3">
+        <h2 className="text-base font-medium text-content-primary">Ghost race</h2>
+        <div className="space-y-2 text-sm text-content-secondary">
+          <p>
+            Open <span className="font-medium text-content-primary">Race</span> from the nav to sprint against
+            built-in opponents (Easy through Extreme, plus <span className="font-medium text-content-primary">The Creator</span> at
+            102 wpm), your saved replays, or ghosts imported from friends.
+          </p>
+          <p>
+            Complete an exercise with replay recording on to save a ghost, or use{' '}
+            <span className="font-medium text-content-primary">Race this run</span> on the results screen.
+            Your best race WPM sets your rank from Bronze to Diamond.
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-base font-medium text-content-primary">Pomodoro timer</h2>
+        <p className="text-sm text-content-secondary">
+          A focus/break timer lives in the bottom-right corner on every page. Adjust focus and break lengths in{' '}
+          <span className="font-medium text-content-primary">Settings → Pomodoro</span>. It auto-minimizes while you type.
+        </p>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="text-base font-medium text-content-primary">Progress &amp; accounts</h2>
         <div className="space-y-2 text-sm text-content-secondary">
           <p>

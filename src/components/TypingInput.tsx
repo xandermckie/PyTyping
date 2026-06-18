@@ -19,6 +19,8 @@ interface TypingInputProps {
   recordReplay?: boolean;
   /** Opponent replay for ghost race mode. */
   ghostReplay?: TypingReplay | null;
+  /** Fired once when the ghost reaches the end before the player. */
+  onGhostFinished?: () => void;
   /** Fired on complete with the recorded event log when recordReplay is true. */
   onReplayReady?: (events: ReplayEvent[]) => void;
   /** Fired once the final character is matched, with the final stats. */
@@ -143,6 +145,7 @@ export default function TypingInput({
   obscurePending = false,
   recordReplay = false,
   ghostReplay = null,
+  onGhostFinished,
   onReplayReady,
   onComplete,
   onProgress,
@@ -182,8 +185,11 @@ export default function TypingInput({
   const replayEventsRef = useRef<ReplayEvent[]>([]);
   const recordReplayRef = useRef(recordReplay);
   recordReplayRef.current = recordReplay;
+  const onGhostFinishedRef = useRef(onGhostFinished);
+  onGhostFinishedRef.current = onGhostFinished;
   const onReplayReadyRef = useRef(onReplayReady);
   onReplayReadyRef.current = onReplayReady;
+  const ghostFinishedFiredRef = useRef(false);
   const [, forceRender] = useState(0);
   const rerender = useCallback(() => forceRender((n) => n + 1), []);
 
@@ -413,13 +419,18 @@ export default function TypingInput({
       const started = statsRef.current.startedAt;
       if (started > 0) {
         const elapsed = performance.now() - started;
-        setGhostCursor(getGhostCursorAt(ghostReplay, elapsed));
+        const pos = getGhostCursorAt(ghostReplay, elapsed);
+        setGhostCursor(pos);
+        if (!ghostFinishedFiredRef.current && pos >= total) {
+          ghostFinishedFiredRef.current = true;
+          onGhostFinishedRef.current?.();
+        }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [ghostReplay, done]);
+  }, [ghostReplay, done, total]);
 
   // Live (but throttled) stats + progress — recomputed every 100ms, not every
   // keystroke, so the stats bar never thrashes React. Stops once finished.
@@ -599,7 +610,8 @@ export default function TypingInput({
           parent (TypingPage) once onComplete fires. */}
       <div aria-live="polite" className="sr-only">
         {done && `Snippet complete — ${display.accuracy}% accuracy.`}
-        {ghostReplay && !done && ghostCursor >= cursor && ghostCursor > 0 && 'Ghost is ahead.'}
+        {ghostReplay && !done && ghostCursor >= total && 'Ghost finished the snippet.'}
+        {ghostReplay && !done && ghostCursor < total && ghostCursor >= cursor && ghostCursor > 0 && 'Ghost is ahead.'}
         {ghostReplay && !done && ghostCursor < cursor && 'You are ahead of the ghost.'}
       </div>
 

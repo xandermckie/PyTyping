@@ -298,6 +298,42 @@ export default function Settings({ onShowLogin }: SettingsProps) {
         </button>
       </section>
 
+      <section>
+        <SectionTitle>Pomodoro</SectionTitle>
+        <div className="space-y-4">
+          <Row label="Focus length" hint="Minutes per focus session">
+            <input
+              type="number"
+              min={5}
+              max={90}
+              value={settings.pomodoroFocusMinutes}
+              onChange={(e) => update({ pomodoroFocusMinutes: Number(e.target.value) })}
+              className={selectClass}
+            />
+          </Row>
+          <Row label="Break length" hint="Minutes per break">
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={settings.pomodoroBreakMinutes}
+              onChange={(e) => update({ pomodoroBreakMinutes: Number(e.target.value) })}
+              className={selectClass}
+            />
+          </Row>
+          <Row label="Phase notifications" hint="Browser notification when a phase ends">
+            <Toggle
+              label="Phase notifications"
+              checked={settings.pomodoroNotifications}
+              onChange={(v) => {
+                update({ pomodoroNotifications: v });
+                if (v) void import('../lib/notifications').then((m) => m.requestNotificationPermission());
+              }}
+            />
+          </Row>
+        </div>
+      </section>
+
       {/* Data */}
       <section>
         <SectionTitle>Data</SectionTitle>

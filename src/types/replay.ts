@@ -24,8 +24,11 @@ export interface FriendGhost {
   replays: TypingReplay[];
 }
 
+export type SyntheticGhostTier = 'easy' | 'medium' | 'hard' | 'extreme' | 'creator';
+
 /** Identifies a ghost source when starting a race. */
 export type GhostSource =
   | { kind: 'self'; profileId: string; replayId: string }
   | { kind: 'friend'; friendId: string; replayId: string }
-  | { kind: 'account'; profileId: string; replayId: string };
+  | { kind: 'account'; profileId: string; replayId: string }
+  | { kind: 'builtin'; tier: SyntheticGhostTier; exerciseId: string };

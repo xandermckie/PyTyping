@@ -5,6 +5,7 @@ import {
   FOCUS_SECONDS,
   formatPomodoroTime,
   phaseDuration,
+  pomodoroConfigFromMinutes,
   resetPomodoro,
   tickPomodoro,
 } from '../pomodoro';
@@ -51,5 +52,21 @@ describe('phaseDuration', () => {
   it('returns focus and break lengths', () => {
     expect(phaseDuration('focus')).toBe(FOCUS_SECONDS);
     expect(phaseDuration('break')).toBe(BREAK_SECONDS);
+  });
+
+  it('uses custom config', () => {
+    const config = pomodoroConfigFromMinutes(10, 3);
+    expect(phaseDuration('focus', config)).toBe(600);
+    expect(phaseDuration('break', config)).toBe(180);
+  });
+});
+
+describe('custom durations', () => {
+  it('ticks with custom config', () => {
+    const config = pomodoroConfigFromMinutes(10, 3);
+    const running = { ...DEFAULT_POMODORO, runState: 'running' as const, secondsLeft: 1 };
+    const { next, phaseComplete } = tickPomodoro(running, config);
+    expect(phaseComplete).toBe(true);
+    expect(next.secondsLeft).toBe(180);
   });
 });
