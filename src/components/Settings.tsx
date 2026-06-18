@@ -285,6 +285,13 @@ export default function Settings({ onShowLogin }: SettingsProps) {
           <Row label="Error sound" hint="Soft tone on a wrong keystroke (off by default)">
             <Toggle label="Error sound" checked={settings.soundEnabled} onChange={(v) => update({ soundEnabled: v })} />
           </Row>
+          <Row label="Record replays" hint="Save typing replays for ghost racing (race mode always records)">
+            <Toggle
+              label="Record replays"
+              checked={settings.recordReplays}
+              onChange={(v) => update({ recordReplays: v })}
+            />
+          </Row>
         </div>
         <button type="button" onClick={reset} className={`mt-4 ${btnClass}`}>
           Reset settings to defaults

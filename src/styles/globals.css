@@ -206,6 +206,17 @@ pre,
   border-radius: 1px;
 }
 
+.pytyping-ghost-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.15em;
+  margin: 0 -1px;
+  vertical-align: text-bottom;
+  background: var(--color-warning, #e8a838);
+  opacity: 0.55;
+  border-radius: 1px;
+}
+
 /* Steady caret when the user disables blinking in Settings. */
 :root[data-caret='steady'] .pytyping-caret {
   animation: none;
@@ -215,6 +226,9 @@ pre,
 @media (prefers-reduced-motion: reduce) {
   .pytyping-caret {
     animation: none;
+  }
+  .pytyping-ghost-caret {
+    opacity: 0.7;
   }
   *,
   *::before,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TypingInput from '../components/TypingInput';
 import QuizPanel from '../components/QuizPanel';
 import BreakdownPanel from '../components/BreakdownPanel';
@@ -7,7 +7,10 @@ import CodePeekPanel from '../components/CodePeekPanel';
 import { EXERCISES, getExerciseById } from '../lib/exercises';
 import { getAttempts, getHistory, getProgress, recordCompletion } from '../lib/progress';
 import type { AttemptSummary } from '../lib/progress';
+import { buildReplay, saveReplay } from '../lib/replays';
 import { useSession } from '../context/SessionContext';
+import { useSettings } from '../context/SettingsContext';
+import type { ReplayEvent } from '../types/replay';
 import type { QuizScore, TypingStats } from '../types/exercise';
 import { getRecommendedExerciseId } from '../lib/learning';
 
@@ -45,7 +48,9 @@ function buildChallengePrompt(code: string): string {
  */
 export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFocusChange }: TypingPageProps) {
   const exercise = getExerciseById(exerciseId);
-  const { scopeId, notifyProgressChange } = useSession();
+  const { scopeId, displayName, notifyProgressChange } = useSession();
+  const { settings } = useSettings();
+  const lastReplayEventsRef = useRef<ReplayEvent[]>([]);
   const [phase, setPhase] = useState<Phase>('typing');
   const [typingStats, setTypingStats] = useState<TypingStats | null>(null);
   // The most recent prior attempt, captured when typing finishes so the
@@ -78,9 +83,26 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
     if (phase !== 'typing') onFocusChange?.(false);
   }, [phase, onFocusChange]);
 
+  const handleReplayReady = useCallback((events: ReplayEvent[]) => {
+    lastReplayEventsRef.current = events;
+  }, []);
+
   const handleTypingComplete = useCallback(
     (stats: TypingStats) => {
       if (!exercise) return;
+      if (settings.recordReplays && lastReplayEventsRef.current.length > 0) {
+        saveReplay(
+          scopeId,
+          buildReplay({
+            exerciseId: exercise.id,
+            code: exercise.code,
+            playerName: displayName,
+            events: lastReplayEventsRef.current,
+            wpm: stats.wpm,
+            accuracy: stats.accuracy,
+          }),
+        );
+      }
       // Snapshot the prior attempt BEFORE the new one is recorded (after the
       // quiz), so the results screen compares against the right baseline.
       const attempts = getAttempts(scopeId, exercise.id);
@@ -88,10 +110,11 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
       setTypingStats(stats);
       setPhase('results');
     },
-    [scopeId, exercise],
+    [scopeId, exercise, displayName, settings.recordReplays],
   );
 
   const handleRestart = useCallback(() => {
+    lastReplayEventsRef.current = [];
     setTypingStats(null);
     setRestartKey((k) => k + 1);
     setPhase('typing');
@@ -189,6 +212,8 @@ export default function TypingPage({ exerciseId, onExit, onSelectExercise, onFoc
             key={`${exercise.id}:${restartKey}`}
             code={exercise.code}
             obscurePending={typingMode === 'challenge'}
+            recordReplay={settings.recordReplays}
+            onReplayReady={handleReplayReady}
             onComplete={handleTypingComplete}
             onQuit={onExit}
             onRestart={handleRestart}

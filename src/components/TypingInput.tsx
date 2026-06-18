@@ -7,12 +7,20 @@ import { getAutoCloseCount } from '../lib/delimiter-pairing';
 import { computeAccuracy, applyTabToCounters, undoCorrectKeystroke } from '../lib/typing-stats';
 import { useSettings } from '../context/SettingsContext';
 import type { TypingStats } from '../types/exercise';
+import type { ReplayEvent, TypingReplay } from '../types/replay';
+import { getGhostCursorAt } from '../lib/replays';
 
 interface TypingInputProps {
   /** The Python source to type, character by character. */
   code: string;
   /** Hide not-yet-typed characters (used by challenge mode). */
   obscurePending?: boolean;
+  /** Record cursor-over-time events for ghost replays. */
+  recordReplay?: boolean;
+  /** Opponent replay for ghost race mode. */
+  ghostReplay?: TypingReplay | null;
+  /** Fired on complete with the recorded event log when recordReplay is true. */
+  onReplayReady?: (events: ReplayEvent[]) => void;
   /** Fired once the final character is matched, with the final stats. */
   onComplete: (stats: TypingStats) => void;
   /** Fired (debounced ~100ms) with progress 0–1 and accuracy 0–100. */
@@ -50,6 +58,8 @@ interface LineProps {
   localCursor: number;
   /** Mistyped position within this line, or -1. */
   localError: number;
+  /** Ghost opponent caret within this line, or -1. */
+  ghostLocalCursor: number;
   showCaret: boolean;
   lineNumbers: boolean;
   obscurePending: boolean;
@@ -67,6 +77,7 @@ const Line = memo(function Line({
   lineState,
   localCursor,
   localError,
+  ghostLocalCursor,
   showCaret,
   lineNumbers,
   obscurePending,
@@ -101,10 +112,13 @@ const Line = memo(function Line({
           }
 
           const caretHere = showCaret && lineState === 'active' && i === localCursor;
+          const ghostCaretHere =
+            ghostLocalCursor >= 0 && lineState === 'active' && i === ghostLocalCursor && ghostLocalCursor !== localCursor;
           const isTyped = lineState === 'done' || (lineState === 'active' && i < localCursor);
           const shouldHide = obscurePending && !isTyped && !isErrorHere;
           return (
             <Fragment key={i}>
+              {ghostCaretHere && <span className="pytyping-ghost-caret" aria-hidden="true" />}
               {caretHere && <span className="pytyping-caret" aria-hidden="true" />}
               <span className={`${cell.className} ${stateClass}`.trim()}>
                 {renderChar(cell, isErrorHere, shouldHide)}
@@ -116,6 +130,9 @@ const Line = memo(function Line({
         {showCaret && lineState === 'active' && localCursor === cells.length && (
           <span className="pytyping-caret" aria-hidden="true" />
         )}
+        {ghostLocalCursor >= 0 && lineState === 'active' && ghostLocalCursor === cells.length && ghostLocalCursor !== localCursor && (
+          <span className="pytyping-ghost-caret" aria-hidden="true" />
+        )}
       </span>
     </div>
   );
@@ -124,6 +141,9 @@ const Line = memo(function Line({
 export default function TypingInput({
   code,
   obscurePending = false,
+  recordReplay = false,
+  ghostReplay = null,
+  onReplayReady,
   onComplete,
   onProgress,
   onQuit,
@@ -159,6 +179,11 @@ export default function TypingInput({
   /** Index of an auto-inserted closer, or -1 when none pending undo. */
   const autoClosedAtRef = useRef(-1);
   const statsRef = useRef({ keystrokes: 0, correct: 0, errors: 0, startedAt: 0, finishedAt: 0 });
+  const replayEventsRef = useRef<ReplayEvent[]>([]);
+  const recordReplayRef = useRef(recordReplay);
+  recordReplayRef.current = recordReplay;
+  const onReplayReadyRef = useRef(onReplayReady);
+  onReplayReadyRef.current = onReplayReady;
   const [, forceRender] = useState(0);
   const rerender = useCallback(() => forceRender((n) => n + 1), []);
 
@@ -166,6 +191,17 @@ export default function TypingInput({
   const [focused, setFocused] = useState(false);
   const [showQuit, setShowQuit] = useState(false);
   const [display, setDisplay] = useState({ wpm: 0, accuracy: 100, errors: 0 });
+  const [ghostCursor, setGhostCursor] = useState(0);
+
+  const recordCursorEvent = useCallback(() => {
+    if (!recordReplayRef.current) return;
+    const stats = statsRef.current;
+    if (stats.startedAt === 0) return;
+    replayEventsRef.current.push({
+      ms: Math.round(performance.now() - stats.startedAt),
+      cursor: cursorRef.current,
+    });
+  }, []);
 
   // Config the input handler needs without re-binding the native listener.
   const cfgRef = useRef({ tabSize: settings.tabSize, sound: settings.soundEnabled });
@@ -197,6 +233,7 @@ export default function TypingInput({
     setDisplay({ wpm: finalStats.wpm, accuracy: finalStats.accuracy, errors: finalStats.errors });
     setDone(true);
     onProgress?.(1, finalStats.accuracy);
+    if (recordReplayRef.current) onReplayReadyRef.current?.(replayEventsRef.current);
     onComplete(finalStats);
   }, [computeStats, onComplete, onProgress]);
   const finishRef = useRef(finish);
@@ -214,12 +251,14 @@ export default function TypingInput({
     if (ch === cells[i].char) {
       stats.correct += 1;
       cursorRef.current = i + 1;
+      recordCursorEvent();
       errorRef.current = -1;
       autoClosedAtRef.current = -1;
       if (getAutoCloseCount(cells, cursorRef.current) === 1) {
         stats.correct += 1;
         autoClosedAtRef.current = cursorRef.current;
         cursorRef.current += 1;
+        recordCursorEvent();
       }
       if (cursorRef.current === total) finishRef.current();
     } else {
@@ -227,23 +266,24 @@ export default function TypingInput({
       errorRef.current = i;
       if (cfgRef.current.sound) playErrorBlip();
     }
-  }, [cells, total]);
+  }, [cells, total, recordCursorEvent]);
 
   /* --- After Enter: auto-advance past the leading spaces on the new line (IDE-style auto-indent). */
   const handleEnter = useCallback(() => {
     commitChar('\n');
-    // Auto-indent: if the cursor is now sitting on leading spaces, skip them.
+    const afterNewline = cursorRef.current;
     const stats = statsRef.current;
-    let i = cursorRef.current;
+    let i = afterNewline;
     while (i < total && cells[i].char === ' ') {
       stats.correct += 1;
       stats.keystrokes += 1;
       i += 1;
     }
     cursorRef.current = i;
+    if (i > afterNewline) recordCursorEvent();
     errorRef.current = -1;
     if (cursorRef.current === total) finishRef.current();
-  }, [cells, commitChar, total]);
+  }, [cells, commitChar, total, recordCursorEvent]);
 
   /* --- Tab expands to N spaces: consume a run of up to tabSize leading spaces
    *     at the caret. If no space is expected, it's a single error keystroke. */
@@ -257,13 +297,14 @@ export default function TypingInput({
     applyTabToCounters(stats, consumed);
     if (consumed > 0) {
       cursorRef.current = i + consumed;
+      recordCursorEvent();
       errorRef.current = -1;
       if (cursorRef.current === total) finishRef.current();
     } else {
       errorRef.current = i;
       if (cfgRef.current.sound) playErrorBlip();
     }
-  }, [cells, total]);
+  }, [cells, total, recordCursorEvent]);
 
   // Backspace can arrive from both keydown and the native beforeinput event
   // (mobile keyboards). Dedupe presses that fire within the same tick.
@@ -364,6 +405,22 @@ export default function TypingInput({
     focusInput();
   }, [focusInput]);
 
+  // Ghost opponent caret — advances from replay timing while the user types.
+  useEffect(() => {
+    if (!ghostReplay || done) return;
+    let raf = 0;
+    const tick = () => {
+      const started = statsRef.current.startedAt;
+      if (started > 0) {
+        const elapsed = performance.now() - started;
+        setGhostCursor(getGhostCursorAt(ghostReplay, elapsed));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [ghostReplay, done]);
+
   // Live (but throttled) stats + progress — recomputed every 100ms, not every
   // keystroke, so the stats bar never thrashes React. Stops once finished.
   useEffect(() => {
@@ -440,6 +497,8 @@ export default function TypingInput({
             const localCursor = lineState === 'active' ? cursor - lm.start : -1;
             const localError =
               errorIndex >= lm.start && errorIndex < end ? errorIndex - lm.start : -1;
+            const ghostLocalCursor =
+              ghostReplay && ghostCursor >= lm.start && ghostCursor <= end ? ghostCursor - lm.start : -1;
             return (
               <Line
                 key={idx}
@@ -448,6 +507,7 @@ export default function TypingInput({
                 lineState={lineState}
                 localCursor={localCursor}
                 localError={localError}
+                ghostLocalCursor={ghostLocalCursor}
                 showCaret={!done}
                 lineNumbers={settings.lineNumbers}
                 obscurePending={obscurePending}
@@ -539,6 +599,8 @@ export default function TypingInput({
           parent (TypingPage) once onComplete fires. */}
       <div aria-live="polite" className="sr-only">
         {done && `Snippet complete — ${display.accuracy}% accuracy.`}
+        {ghostReplay && !done && ghostCursor >= cursor && ghostCursor > 0 && 'Ghost is ahead.'}
+        {ghostReplay && !done && ghostCursor < cursor && 'You are ahead of the ghost.'}
       </div>
 
       {/* Esc menu — keyboard accessible, focus moves to it. */}

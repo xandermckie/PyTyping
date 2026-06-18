@@ -94,6 +94,12 @@ export default function AboutLegal() {
             <ExtLink href="https://github.com">GitHub</ExtLink>, a third-party service governed by
             GitHub&apos;s terms and privacy policy.
           </p>
+          <p className="mt-3">
+            Ghost race replays are stored locally on your device. Exporting a ghost file includes your
+            display name, exercise id, typing speed, accuracy, and cursor timing — not the full
+            exercise source code. Importing a friend&apos;s ghost is a user-initiated file upload;
+            PyTyping does not fetch ghosts from the network.
+          </p>
         </Section>
 
         <Section title="Accessibility">

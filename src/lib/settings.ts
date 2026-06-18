@@ -21,6 +21,8 @@ export interface Settings {
   liveWpm: boolean;
   /** Blink the caret (off = steady bar). */
   caretBlink: boolean;
+  /** Save typing replays for ghost racing (race mode always records). */
+  recordReplays: boolean;
 }
 
 // Premade code fonts. The first family in each stack is loaded from Google
@@ -58,6 +60,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lineNumbers: true,
   liveWpm: true,
   caretBlink: true,
+  recordReplays: true,
 };
 
 /** Coerce anything (storage, imported backup) into a safe, complete Settings. */
@@ -86,5 +89,6 @@ export function validateSettings(raw: unknown): Settings {
   if (isBoolean(raw.lineNumbers)) out.lineNumbers = raw.lineNumbers;
   if (isBoolean(raw.liveWpm)) out.liveWpm = raw.liveWpm;
   if (isBoolean(raw.caretBlink)) out.caretBlink = raw.caretBlink;
+  if (isBoolean(raw.recordReplays)) out.recordReplays = raw.recordReplays;
   return out;
 }

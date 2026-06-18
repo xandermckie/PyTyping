@@ -6,6 +6,8 @@ import Logo from './Logo';
 export type AppView =
   | 'home'
   | 'typing'
+  | 'race'
+  | 'race-run'
   | 'settings'
   | 'progress'
   | 'login'
@@ -24,6 +26,7 @@ const PRIMARY_NAV: NavItem[] = [
   { id: 'home', label: 'Exercises' },
   { id: 'guide', label: 'Guide' },
   { id: 'leaderboard', label: 'Leaderboard' },
+  { id: 'race', label: 'Race' },
   { id: 'progress', label: 'Progress' },
   { id: 'settings', label: 'Settings' },
   { id: 'contribute', label: 'Contribute' },

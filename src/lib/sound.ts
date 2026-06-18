@@ -38,3 +38,26 @@ export function playErrorBlip(): void {
     /* audio unavailable */
   }
 }
+
+/** Soft chime when a Pomodoro phase completes. */
+export function playPhaseChime(): void {
+  try {
+    const audio = getContext();
+    if (!audio) return;
+    if (audio.state === 'suspended') void audio.resume().catch(() => {});
+
+    const now = audio.currentTime;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.05, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(now);
+    osc.stop(now + 0.36);
+  } catch {
+    /* audio unavailable */
+  }
+}

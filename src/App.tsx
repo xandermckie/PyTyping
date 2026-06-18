@@ -1,16 +1,19 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
 import { SessionProvider, useSession } from './context/SessionContext';
+import { PomodoroProvider } from './context/PomodoroContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppHeader, { type AppView } from './components/AppHeader';
 import Home from './pages/Home';
 import LoginScreen from './components/LoginScreen';
 import Footer from './components/Footer';
 import CommandPalette from './components/CommandPalette';
+import PomodoroWidget from './components/PomodoroWidget';
 import type { Command } from './components/CommandPalette';
 import { EXERCISES } from './lib/exercises';
 import { THEME_OPTIONS } from './lib/theme';
 import { registerGlobalErrorHandlers } from './lib/global-errors';
+import type { GhostSource } from './types/replay';
 
 // Lazy-load pages not needed on the initial render — keeps the first-paint
 // bundle lean. Each becomes its own chunk that Vite splits automatically.
@@ -19,6 +22,8 @@ const PythonGuide = lazy(() => import('./pages/PythonGuide'));
 const Contribute = lazy(() => import('./pages/Contribute'));
 const GettingStarted = lazy(() => import('./pages/GettingStarted'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
+const RaceLobby = lazy(() => import('./pages/RaceLobby'));
+const RacePage = lazy(() => import('./pages/RacePage'));
 const Settings = lazy(() => import('./components/Settings'));
 const ProgressTracker = lazy(() => import('./components/ProgressTracker'));
 const AboutLegal = lazy(() => import('./components/AboutLegal'));
@@ -38,6 +43,8 @@ const PAGE_TITLES: Record<AppView, string> = {
   contribute: 'Contribute',
   'getting-started': 'Getting Started',
   leaderboard: 'Leaderboard',
+  race: 'Ghost race',
+  'race-run': 'Ghost race',
 };
 
 /**
@@ -50,6 +57,7 @@ function AppShell() {
   const { isGuest, logout } = useSession();
   const [view, setView] = useState<AppView>('home');
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [raceGhost, setRaceGhost] = useState<{ exerciseId: string; source: GhostSource } | null>(null);
   const [chromeHidden, setChromeHidden] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
@@ -60,7 +68,7 @@ function AppShell() {
   const goHome = useCallback(() => setView('home'), []);
 
   useEffect(() => {
-    if (view !== 'typing') setChromeHidden(false);
+    if (view !== 'typing' && view !== 'race-run') setChromeHidden(false);
   }, [view]);
 
   useEffect(() => {
@@ -90,6 +98,7 @@ function AppShell() {
       { id: 'nav-getting-started', label: 'Getting Started', hint: 'navigate', run: () => setView('getting-started') },
       { id: 'nav-guide', label: 'Go to Python guide', hint: 'navigate', run: () => setView('guide') },
       { id: 'nav-leaderboard', label: 'Go to Leaderboard', hint: 'navigate', run: () => setView('leaderboard') },
+      { id: 'nav-race', label: 'Go to Race', hint: 'navigate', run: () => setView('race') },
       { id: 'nav-contribute', label: 'Contribute / request a language', hint: 'navigate', run: () => setView('contribute') },
       { id: 'nav-progress', label: 'Go to Progress', hint: 'navigate', run: () => setView('progress') },
       { id: 'nav-settings', label: 'Go to Settings', hint: 'navigate', run: () => setView('settings') },
@@ -155,10 +164,30 @@ function AppShell() {
           {view === 'about' && <AboutLegal />}
           {view === 'getting-started' && <GettingStarted />}
           {view === 'leaderboard' && <Leaderboard />}
+          {view === 'race' && (
+            <RaceLobby
+              onStartRace={(exerciseId, source) => {
+                setActiveId(exerciseId);
+                setRaceGhost({ exerciseId, source });
+                setView('race-run');
+              }}
+            />
+          )}
+          {view === 'race-run' && activeId && raceGhost && (
+            <RacePage
+              key={`${activeId}-${JSON.stringify(raceGhost.source)}`}
+              exerciseId={activeId}
+              ghostSource={raceGhost.source}
+              onExit={() => setView('race')}
+              onFocusChange={setChromeHidden}
+            />
+          )}
         </Suspense>
       </main>
 
       <Footer hidden={chromeHidden} onShowLegal={() => setView('about')} />
+
+      <PomodoroWidget chromeHidden={chromeHidden} />
 
       <CommandPalette open={paletteOpen} commands={commands} onClose={() => setPaletteOpen(false)} />
     </div>
@@ -172,7 +201,9 @@ export default function App() {
     <ErrorBoundary>
       <SettingsProvider>
         <SessionProvider>
-          <AppShell />
+          <PomodoroProvider>
+            <AppShell />
+          </PomodoroProvider>
         </SessionProvider>
       </SettingsProvider>
     </ErrorBoundary>
