@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import TypingPage from './pages/TypingPage';
 import PythonGuide from './pages/PythonGuide';
 import Contribute from './pages/Contribute';
+import GettingStarted from './pages/GettingStarted';
+import Leaderboard from './pages/Leaderboard';
 import Settings from './components/Settings';
 import ProgressTracker from './components/ProgressTracker';
 import AccountMenu from './components/AccountMenu';
@@ -18,11 +20,12 @@ import type { Command } from './components/CommandPalette';
 import { EXERCISES } from './lib/exercises';
 import { THEME_OPTIONS } from './lib/theme';
 
-type View = 'home' | 'typing' | 'settings' | 'progress' | 'login' | 'about' | 'guide' | 'contribute';
+type View = 'home' | 'typing' | 'settings' | 'progress' | 'login' | 'about' | 'guide' | 'contribute' | 'getting-started' | 'leaderboard';
 
 const NAV: Array<{ id: Exclude<View, 'typing' | 'login' | 'about'>; label: string }> = [
   { id: 'home', label: 'Exercises' },
   { id: 'guide', label: 'Guide' },
+  { id: 'leaderboard', label: 'Leaderboard' },
   { id: 'progress', label: 'Progress' },
   { id: 'settings', label: 'Settings' },
   { id: 'contribute', label: 'Contribute' },
@@ -71,7 +74,9 @@ function AppShell() {
     }));
     const cmds: Command[] = [
       { id: 'nav-home', label: 'Go to Exercises', hint: 'navigate', run: () => setView('home') },
+      { id: 'nav-getting-started', label: 'Getting Started', hint: 'navigate', run: () => setView('getting-started') },
       { id: 'nav-guide', label: 'Go to Python guide', hint: 'navigate', run: () => setView('guide') },
+      { id: 'nav-leaderboard', label: 'Go to Leaderboard', hint: 'navigate', run: () => setView('leaderboard') },
       { id: 'nav-contribute', label: 'Contribute / request a language', hint: 'navigate', run: () => setView('contribute') },
       { id: 'nav-progress', label: 'Go to Progress', hint: 'navigate', run: () => setView('progress') },
       { id: 'nav-settings', label: 'Go to Settings', hint: 'navigate', run: () => setView('settings') },
@@ -159,6 +164,8 @@ function AppShell() {
         {view === 'settings' && <Settings onShowLogin={() => setView('login')} />}
         {view === 'progress' && <ProgressTracker exercises={EXERCISES} />}
         {view === 'about' && <AboutLegal />}
+        {view === 'getting-started' && <GettingStarted />}
+        {view === 'leaderboard' && <Leaderboard />}
       </main>
 
       <Footer hidden={chromeHidden} onShowLegal={() => setView('about')} />

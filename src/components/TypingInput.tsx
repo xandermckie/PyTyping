@@ -220,6 +220,22 @@ export default function TypingInput({
     }
   }, [cells, total]);
 
+  /* --- After Enter: auto-advance past the leading spaces on the new line (IDE-style auto-indent). */
+  const handleEnter = useCallback(() => {
+    commitChar('\n');
+    // Auto-indent: if the cursor is now sitting on leading spaces, skip them.
+    const stats = statsRef.current;
+    let i = cursorRef.current;
+    while (i < total && cells[i].char === ' ') {
+      stats.correct += 1;
+      stats.keystrokes += 1;
+      i += 1;
+    }
+    cursorRef.current = i;
+    errorRef.current = -1;
+    if (cursorRef.current === total) finishRef.current();
+  }, [cells, commitChar, total]);
+
   /* --- Tab expands to N spaces: consume a run of up to tabSize leading spaces
    *     at the caret. If no space is expected, it's a single error keystroke. */
   const handleTab = useCallback(() => {
@@ -274,7 +290,7 @@ export default function TypingInput({
           break;
         case 'insertLineBreak':
         case 'insertParagraph':
-          commitChar('\n');
+          handleEnter();
           break;
         case 'deleteContentBackward':
         case 'deleteContentForward':
@@ -287,7 +303,7 @@ export default function TypingInput({
     };
     ta.addEventListener('beforeinput', onBeforeInput);
     return () => ta.removeEventListener('beforeinput', onBeforeInput);
-  }, [commitChar, handleBackspace, rerender, total]);
+  }, [commitChar, handleBackspace, handleEnter, rerender, total]);
 
   // Special keys that don't produce text input go through keydown.
   const onKeyDown = useCallback(
@@ -452,7 +468,7 @@ export default function TypingInput({
       <div className="mt-3 flex gap-2 sm:hidden">
         {[
           { label: 'Tab', fn: handleTab },
-          { label: 'Enter', fn: () => commitChar('\n') },
+          { label: 'Enter', fn: handleEnter },
           { label: '⌫', fn: handleBackspace },
           { label: 'Esc', fn: () => setShowQuit(true) },
         ].map((k) => (

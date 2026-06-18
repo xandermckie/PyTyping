@@ -235,3 +235,11 @@ export function recordCompletion(
 export function isCompleted(profileId: string, exerciseId: string): boolean {
   return Boolean(getProgress(profileId)[exerciseId]);
 }
+
+export function getAggregateStats(profileId: string): { avgWpm: number; avgAccuracy: number; completed: number } {
+  const records = Object.values(getProgress(profileId));
+  if (!records.length) return { avgWpm: 0, avgAccuracy: 0, completed: 0 };
+  const avgWpm = Math.round(records.reduce((s, r) => s + r.wpm, 0) / records.length);
+  const avgAccuracy = Math.round(records.reduce((s, r) => s + r.accuracy, 0) / records.length);
+  return { avgWpm, avgAccuracy, completed: records.length };
+}
