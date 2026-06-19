@@ -197,7 +197,9 @@ export default function RaceLobby({ onStartRace, onManageFriends }: RaceLobbyPro
     const a = document.createElement('a');
     a.href = url;
     a.download = `pytyping-ghost-${selectedGhost.replay.exerciseId}.json`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [selectedGhost]);
 

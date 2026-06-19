@@ -43,6 +43,7 @@ import { SETTINGS_KEY, validateSettings } from './settings';
 import type { Settings } from './settings';
 import { loadValidated, removeKey, saveJSON } from './storage';
 import { isObject, isString } from './validation';
+import { validateAvatarPhotoDataUrl } from './profile-photo';
 import type { FriendGhost } from '../types/replay';
 
 /** Maximum backup file size accepted on import (2 MB). */
@@ -89,10 +90,12 @@ function validateFriendGhostsList(raw: unknown): FriendGhost[] {
       if (!Array.isArray(item.replays)) return null;
       const replays = item.replays.map(validateTypingReplay).filter((r) => r !== null);
       if (replays.length === 0) return null;
+      const photo = validateAvatarPhotoDataUrl(item.avatarPhoto) ?? undefined;
       return {
         id: item.id,
         displayName: item.displayName,
         importedAt: isString(item.importedAt) ? item.importedAt : new Date().toISOString(),
+        ...(photo ? { avatarPhoto: photo } : {}),
         replays,
       } satisfies FriendGhost;
     })

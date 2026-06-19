@@ -127,6 +127,8 @@ export function downloadFriendShareJson(bundle: FriendShareBundle): void {
   const safeName = bundle.displayName.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 40) || 'friend';
   a.href = url;
   a.download = `pytyping-friend-${safeName}.json`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }

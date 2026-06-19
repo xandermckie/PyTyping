@@ -93,7 +93,9 @@ export default function RacePage({ exerciseId, ghostSource, onExit, onFocusChang
     const a = document.createElement('a');
     a.href = url;
     a.download = `pytyping-ghost-${replay.exerciseId}.json`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [savedReplay]);
 

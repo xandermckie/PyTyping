@@ -20,6 +20,7 @@ const TIPS: Array<{ keys: string; label: string }> = [
 export default function Footer({ hidden, onShowLegal }: FooterProps) {
   return (
     <footer
+      id="site-footer"
       className={`px-4 pb-6 pt-4 transition-opacity duration-300 sm:px-6 ${
         hidden ? 'pointer-events-none opacity-0' : 'opacity-100'
       }`}
