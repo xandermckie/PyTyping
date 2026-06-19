@@ -7,7 +7,7 @@ interface PomodoroWidgetProps {
 }
 
 export default function PomodoroWidget({ chromeHidden = false }: PomodoroWidgetProps) {
-  const { phase, runState, secondsLeft, minimized, phaseLabel, start, pause, reset, setMinimized } =
+  const { phase, runState, secondsLeft, minimized, phaseLabel, start, pause, reset, skip, setMinimized } =
     usePomodoro();
   const autoMinimizedRef = useRef(false);
 
@@ -80,6 +80,15 @@ export default function PomodoroWidget({ chromeHidden = false }: PomodoroWidgetP
             {isRunning ? 'Pause' : 'Resume'}
           </button>
         )}
+        <button
+          type="button"
+          onClick={skip}
+          className="rounded-md border border-border-tertiary px-3 py-1.5 text-sm text-content-secondary hover:bg-background-secondary"
+          aria-label={`Skip to ${phase === 'focus' ? 'break' : 'focus'}`}
+          title={`Skip to ${phase === 'focus' ? 'break' : 'focus'}`}
+        >
+          Skip
+        </button>
         <button
           type="button"
           onClick={reset}

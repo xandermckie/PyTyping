@@ -8,6 +8,7 @@ import {
   pomodoroConfigFromMinutes,
   resetPomodoro,
   savePomodoroState,
+  skipPhase,
   tickPomodoro,
   type PomodoroPhase,
   type PomodoroRunState,
@@ -27,6 +28,7 @@ interface PomodoroContextValue {
   reset: () => void;
   toggleMinimized: () => void;
   setMinimized: (value: boolean) => void;
+  skip: () => void;
 }
 
 const PomodoroContext = createContext<PomodoroContextValue | null>(null);
@@ -84,6 +86,10 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
     persist(resetPomodoro(state, config));
   }, [persist, state, config]);
 
+  const skip = useCallback(() => {
+    persist(skipPhase(state, config));
+  }, [persist, state, config]);
+
   const toggleMinimized = useCallback(() => {
     persist({ ...state, minimized: !state.minimized });
   }, [persist, state]);
@@ -107,8 +113,9 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
       reset,
       toggleMinimized,
       setMinimized,
+      skip,
     }),
-    [state, start, pause, reset, toggleMinimized, setMinimized],
+    [state, start, pause, reset, toggleMinimized, setMinimized, skip],
   );
 
   return <PomodoroContext.Provider value={value}>{children}</PomodoroContext.Provider>;

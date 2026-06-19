@@ -89,6 +89,19 @@ export function tickPomodoro(
   };
 }
 
+export function skipPhase(
+  state: PomodoroState,
+  config: PomodoroConfig = DEFAULT_POMODORO_CONFIG,
+): PomodoroState {
+  const nextPhase: PomodoroPhase = state.phase === 'focus' ? 'break' : 'focus';
+  return {
+    ...state,
+    phase: nextPhase,
+    secondsLeft: phaseDuration(nextPhase, config),
+    runState: 'idle',
+  };
+}
+
 export function resetPomodoro(
   state: PomodoroState,
   config: PomodoroConfig = DEFAULT_POMODORO_CONFIG,
