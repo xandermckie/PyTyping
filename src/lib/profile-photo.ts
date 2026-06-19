@@ -182,20 +182,37 @@ export async function loadImageFileForCrop(file: File): Promise<LoadImageFileRes
   if (file.size > MAX_UPLOAD_BYTES) {
     return { ok: false, error: 'Image file is too large (max 100 MB).' };
   }
+
+  // Try native object URL first (fast, works for JPEG/PNG/WebP/GIF/etc.)
   const objectUrl = URL.createObjectURL(file);
   try {
     const img = await loadImageFromUrl(objectUrl);
-    if (img.width < 1 || img.height < 1) {
-      URL.revokeObjectURL(objectUrl);
-      return { ok: false, error: 'That image has no usable dimensions.' };
-    }
-    return { ok: true, img, objectUrl };
+    if (img.width >= 1 && img.height >= 1) return { ok: true, img, objectUrl };
+    URL.revokeObjectURL(objectUrl);
+    return { ok: false, error: 'That image has no usable dimensions.' };
   } catch {
     URL.revokeObjectURL(objectUrl);
+  }
+
+  // ponytail: createImageBitmap handles HEIC/HEIF and other formats the <img> tag can't on some browsers
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { bitmap.close(); throw new Error('no ctx'); }
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const img = await loadImageFromUrl(dataUrl);
+    if (img.width < 1 || img.height < 1) return { ok: false, error: 'That image has no usable dimensions.' };
+    // objectUrl is a data URL here; URL.revokeObjectURL is a no-op on data URLs
+    return { ok: true, img, objectUrl: dataUrl };
+  } catch {
     return {
       ok: false,
-      error:
-        'Your browser could not open this image. Try exporting as JPEG or PNG (some HEIC/TIFF files need conversion).',
+      error: 'Your browser could not open this image. Try saving it as JPEG or PNG first.',
     };
   }
 }

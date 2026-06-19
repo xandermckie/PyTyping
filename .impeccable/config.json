@@ -1,0 +1,9 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [
+      "src/lib/profile-photo.ts"
+    ],
+    "ignoreValues": []
+  }
+}
