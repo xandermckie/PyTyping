@@ -187,13 +187,32 @@ export default function Home({ onSelectExercise, onNavigate }: HomeProps) {
         ))}
       </div>
 
+      {/* Toolbar above grid */}
+      <div className="mb-4 flex items-center gap-2">
+        <a
+          href="#site-footer"
+          className="flex items-center gap-1.5 rounded-md border border-border-tertiary px-3 py-1.5 text-xs text-content-tertiary transition-colors hover:border-border-secondary hover:text-content-secondary"
+        >
+          <span aria-hidden="true">↓</span> Jump to footer
+        </a>
+        {filtered.length > 0 && (
+          <button
+            type="button"
+            onClick={() => onSelectExercise(filtered[Math.floor(Math.random() * filtered.length)].id)}
+            className="flex items-center gap-1.5 rounded-md border border-border-tertiary px-3 py-1.5 text-xs text-content-tertiary transition-colors hover:border-border-secondary hover:text-content-secondary"
+          >
+            <span aria-hidden="true">⚄</span> Random
+          </button>
+        )}
+      </div>
+
       {/* Exercise grid */}
       {filtered.length === 0 ? (
         <p className="py-16 text-center text-sm text-content-secondary">
           No exercises match{query ? ` "${query}"` : ' those filters'}.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 pb-16 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((ex) => (
             <ExerciseCard
               key={ex.id}
@@ -204,15 +223,6 @@ export default function Home({ onSelectExercise, onNavigate }: HomeProps) {
           ))}
         </div>
       )}
-
-      <div className="flex justify-center pb-8 pt-6">
-        <a
-          href="#site-footer"
-          className="flex items-center gap-1.5 rounded-md border border-border-tertiary px-3 py-1.5 text-xs text-content-tertiary transition-colors hover:border-border-secondary hover:text-content-secondary"
-        >
-          <span aria-hidden="true">↓</span> Jump to footer
-        </a>
-      </div>
     </div>
   );
 }

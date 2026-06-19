@@ -96,6 +96,7 @@ export default defineConfig({
         manualChunks(id) {
           if (id.includes('exercises.json')) return 'exercises';
           if (id.includes('node_modules/prismjs')) return 'prism';
+          if (id.includes('node_modules/heic2any')) return 'heic2any';
           if (id.includes('node_modules/react')) return 'react-vendor';
           return undefined;
         },

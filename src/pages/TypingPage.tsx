@@ -84,7 +84,7 @@ export default function TypingPage({
   const recommendedExerciseId = useMemo(() => {
     if (!exercise) return null;
     return getRecommendedExerciseId(exercise.id, related, EXERCISES, getProgress(scopeId), getHistory(scopeId));
-  }, [exercise, related, scopeId, saveWarning, phase]);
+  }, [exercise, related, scopeId, phase]);
 
   // Whenever we leave the typing phase, make sure the chrome is visible again.
   useEffect(() => {

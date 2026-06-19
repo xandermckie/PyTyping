@@ -194,7 +194,7 @@ export async function loadImageFileForCrop(file: File): Promise<LoadImageFileRes
     URL.revokeObjectURL(objectUrl);
   }
 
-  // ponytail: createImageBitmap handles HEIC/HEIF and other formats the <img> tag can't on some browsers
+  // ponytail: createImageBitmap handles some formats <img> can't (Safari HEIC, certain BMPs)
   try {
     const bitmap = await createImageBitmap(file);
     const canvas = document.createElement('canvas');
@@ -206,15 +206,37 @@ export async function loadImageFileForCrop(file: File): Promise<LoadImageFileRes
     bitmap.close();
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     const img = await loadImageFromUrl(dataUrl);
-    if (img.width < 1 || img.height < 1) return { ok: false, error: 'That image has no usable dimensions.' };
-    // objectUrl is a data URL here; URL.revokeObjectURL is a no-op on data URLs
-    return { ok: true, img, objectUrl: dataUrl };
+    if (img.width >= 1 && img.height >= 1) return { ok: true, img, objectUrl: dataUrl };
   } catch {
-    return {
-      ok: false,
-      error: 'Your browser could not open this image. Try saving it as JPEG or PNG first.',
-    };
+    // fall through to heic2any
   }
+
+  // ponytail: heic2any decodes HEIC/HEIF on Chrome/Firefox which lack native support
+  const isHeic = /image\/(heic|heif)/.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+  if (isHeic) {
+    try {
+      const { default: heic2any } = await import('heic2any');
+      const result = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+      const blob = Array.isArray(result) ? result[0] : result;
+      const convertedUrl = URL.createObjectURL(blob);
+      try {
+        const img = await loadImageFromUrl(convertedUrl);
+        if (img.width >= 1 && img.height >= 1) return { ok: true, img, objectUrl: convertedUrl };
+        URL.revokeObjectURL(convertedUrl);
+      } catch {
+        URL.revokeObjectURL(convertedUrl);
+      }
+    } catch {
+      // heic2any unavailable or failed
+    }
+  }
+
+  return {
+    ok: false,
+    error: isHeic
+      ? 'Could not convert this HEIC photo. Try exporting it as JPEG from your camera app.'
+      : 'Your browser could not open this image. Try saving it as JPEG or PNG first.',
+  };
 }
 
 /** Resize an uploaded image file to a JPEG data URL within size limits (no crop). */

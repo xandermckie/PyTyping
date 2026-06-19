@@ -82,8 +82,8 @@ export default function Leaderboard() {
       </div>
 
       {tab === 'overall' ? (
-        <div className="overflow-hidden rounded-lg border border-border-tertiary bg-background-secondary">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-border-tertiary bg-background-secondary">
+          <table className="w-full min-w-[480px] text-sm">
             <thead>
               <tr className="border-b border-border-tertiary">
                 <th className="w-10 px-4 py-2.5 text-left font-medium text-content-tertiary">#</th>
@@ -135,11 +135,11 @@ export default function Leaderboard() {
           </table>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border-tertiary bg-background-secondary">
+        <div className="overflow-x-auto rounded-lg border border-border-tertiary bg-background-secondary">
           {sortedRecords.length === 0 ? (
             <p className="p-6 text-sm text-content-secondary">No race records yet. Complete a race to appear here.</p>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[420px] text-sm">
               <thead>
                 <tr className="border-b border-border-tertiary">
                   <th className="px-4 py-2.5 text-left font-medium text-content-tertiary">User</th>
